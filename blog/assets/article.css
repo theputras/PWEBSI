@@ -1,0 +1,81 @@
+a {
+    text-decoration: none; /* Removes the underline from links */
+    border: none;          /* Removes any borders around the link */
+    outline: none;         /* Removes focus outline (if desired) */
+}
+article, footer{
+    color: white;
+    }
+        /* Navbar default */  
+    .navbar, footer {  
+        transition: all 0.3s ease;  
+        padding-top: 10px;  
+        padding-bottom: 10px; 
+        background-color: #393E46;
+         width: calc(100% - 30px); /* Kurangi sedikit dari lebar penuh */
+        margin: 0 auto; /* Pusatkan navbar */
+    }  
+
+    /* Navbar saat di-scroll */  
+    .navbar-scrolled {  
+        padding-top: 5px;  
+        padding-bottom: 5px;  
+        background-color: rgba(57, 62, 70, 0.95) !important; /* Sesuaikan dengan warna asli navbar */  
+        backdrop-filter: blur(10px); /* Efek blur tambahan */  
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);  
+              width: 100%; /* Melebar penuh */
+        margin: 0; /* Hilangkan margin */
+        left: 0; /* Pastikan menempel ke kiri */
+        right: 0; /* Pastikan menempel ke kanan */
+    }  
+
+    /* Logo saat di-scroll */  
+    .navbar-brand img {  
+        transition: all 0.3s ease;  
+        max-height: 25px; /* Ukuran default */  
+    }  
+
+    .navbar-scrolled .navbar-brand img {  
+        max-height: 20px; /* Ukuran saat di-scroll */  
+    }  
+
+    /* Tombol navigasi saat di-scroll */  
+    .navbar-scrolled .nav-link {  
+        font-size: 0.9rem; /* Ukuran font lebih kecil */  
+    }  
+    
+       /* Pastikan navbar tetap di atas konten */
+    .navbar.position-sticky {
+        z-index: 1050;
+    }
+    
+    
+     /* Custom active state style */
+     .nav-item .btn.active {
+            background-color: #948979; /* Change to any color you prefer */
+            color: #DFD0B8;
+            
+        }
+
+        .nav-item .btn:focus {
+            box-shadow: none; /* Remove focus outline for buttons */
+        }
+        
+        
+        .collapse {
+            margin-right: 15px;
+        }
+        .nav-item .btn-link {
+            border-radius: 10px; /* Apply rounded corners to btn-link */
+        }
+        
+          /* Custom rounded corners on bootstrap buttons */
+          .nav-item .btn {
+            color: white;
+            border-radius: 10px; /* Rounded corners */
+        }
+        
+        .navbar-brand {
+            margin-left: 16px;
+        }
+

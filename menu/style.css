@@ -1,0 +1,177 @@
+/* Prolog CSS */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/normalize/8.1.0/normalize.min.css'); /* Untuk mengatur default styling */
+ 
+/* Style untuk HTML */
+html {
+    margin: 0;
+    padding: 0;
+}
+
+/* Style untuk Body */
+body {
+    background-color: #1a1a2e;
+    margin: 0;
+    padding: 0;
+    color: #ffffff;
+    font-family: 'Arial', sans-serif;
+}
+
+.titleResto {
+    text-align: center; /* Menempatkan teks di tengah */
+    font-size: 36px; /* Ukuran font yang lebih besar */
+    margin-top: 20px; /* Memberikan jarak atas antara gambar dan judul */
+}
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.header {
+    text-align: center;
+    position: relative;
+    overflow: hidden; /* Menyembunyikan bagian gambar yang terpotong */
+}
+
+.header img {
+    width: 100%;
+    height: 40%; /* Memotong gambar menjadi setengah */
+    object-fit: cover;
+    object-position: top; /* Menempatkan gambar di bagian atas */
+}
+
+/* Style untuk .menu (Flexbox) */
+
+.menu, .contactPerson{
+    margin: 10vh;
+    padding: 0;
+}
+.titleMenu, .titleCP {
+    text-align: center; /* Menempatkan teks di tengah */
+    margin: 30px; /* Memberikan jarak bawah antara title dan menu */
+}
+
+.titleMenu p, .titleCP p {
+    font-size: 24px; /* Ukuran font yang lebih besar */
+    font-weight: bold; /* Menebalkan teks */
+    color: #FFA500; /* Warna teks oranye untuk memberikan kesan ceria */
+    text-transform: uppercase; /* Mengubah teks menjadi huruf kapital semua */
+    letter-spacing: 2px; /* Memberikan jarak antar huruf */
+    font-family: 'Arial', sans-serif; /* Menggunakan font sans-serif */
+    border-bottom: 2px solid #FFA500; /* Memberikan garis bawah untuk menonjolkan judul */
+    padding-bottom: 10px; /* Memberikan sedikit ruang di bawah teks */
+}
+.listMenu {
+    display: flex;
+    justify-content: center; /* Menempatkan menu di tengah secara horizontal */
+    align-items: flex-start; /* Menempatkan menu di bagian atas secara vertikal */
+    gap: 20px; /* Memberikan jarak antar card */
+    flex-wrap: wrap; /* Agar card bisa membungkus ke baris baru jika layar lebih kecil */
+    margin-top: 20px; /* Memberikan jarak antara gambar dan menu */
+}
+
+.cardMenu {
+    background-color: #333;
+    color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    width: 250px;
+    text-align: left;
+    display: flex;
+    flex-direction: column; /* Mengatur layout dalam card menjadi vertikal */
+}
+
+.cardImage {
+    height: 15%; /* Mengatur tinggi gambar menjadi 45% dari tinggi card */
+    margin-bottom: 10px;
+    overflow: hidden;
+    border-radius: 10px;
+}
+
+.cardImage img {
+    width: 100%;
+    height: 100%; /* Menyesuaikan tinggi gambar dengan kontainer */
+    object-fit: cover; /* Memotong gambar agar tetap memenuhi area tanpa distorsi */
+}
+
+.cardContent {
+    display: flex;
+    flex-direction: column;
+}
+
+.cardContent h3 {
+    margin: 10px 0;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.cardContent p {
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+
+/* Style untuk Form */
+form {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+    
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Styling untuk setiap group input */
+.form-group {
+    margin-bottom: 15px;
+}
+
+/* Styling untuk label */
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+/* Styling untuk input */
+input[type="text"],
+input[type="email"],
+input[type="tel"], select {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+/* Styling untuk button */
+button {
+    width: 100%;
+    padding: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+/* Hover effect untuk button */
+button:hover {
+    background-color: #45a049;
+}
+
+
+footer {
+    color: #fff;
+    text-align: center;
+    padding: 20px 0;
+    position: relative;
+    bottom: 0;
+    width: 100%;
+}
+footer p {
+    margin: 0;
+    font-size: 2vh;
+}
