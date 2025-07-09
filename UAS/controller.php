@@ -74,6 +74,73 @@ function insertItem() {
     }
 }
 
+function deleteItem() {
+    global $conn;
+
+    if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+        echo json_encode([
+            "status" => "error",
+            "message" => "⚠️ Harus menggunakan metode POST."
+        ]);
+        return;
+    }
+
+    if (empty($_POST['kode'])) {
+        echo json_encode([
+            "status" => "error",
+            "message" => "⚠️ Kode item tidak boleh kosong."
+        ]);
+        return;
+    }
+
+    $kode = $_POST['kode'];
+
+    $stmt = $conn->prepare("DELETE FROM item WHERE kode = ?");
+    $stmt->bind_param("s", $kode);
+
+    if ($stmt->execute()) {
+        echo json_encode([
+            "status" => "success",
+            "message" => "🗑️ Item berhasil dihapus."
+        ]);
+    } else {
+        echo json_encode([
+            "status" => "error",
+            "message" => "❌ Gagal menghapus item."
+        ]);
+    }
+}
+
+
+function updateItem() {
+    global $conn;
+
+    if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+        echo json_encode(["status" => "error", "message" => "⚠️ Harus POST"]);
+        return;
+    }
+
+    $kode = $_POST['kode'] ?? '';
+    $nama = $_POST['nama'] ?? '';
+    $satuan = $_POST['satuan'] ?? '';
+    $harga = $_POST['harga'] ?? '';
+
+    if (!$kode || !$nama || !$satuan || $harga === '') {
+        echo json_encode(["status" => "error", "message" => "⚠️ Data tidak lengkap."]);
+        return;
+    }
+
+    $stmt = $conn->prepare("UPDATE item SET kode = ?, nama = ?, satuan = ?, harga = ? WHERE kode = ?");
+    $stmt->bind_param("sssds", $kode, $nama, $satuan, $harga, $kode);
+
+    if ($stmt->execute()) {
+        echo json_encode(["status" => "success", "message" => "✅ Item berhasil diupdate."]);
+    } else {
+        echo json_encode(["status" => "error", "message" => "❌ Gagal update item."]);
+    }
+}
+
+
 // Routing
 if (isset($_GET['action']) && $_GET['action'] === 'getAllItems') {
     getAllItems();
@@ -81,6 +148,13 @@ if (isset($_GET['action']) && $_GET['action'] === 'getAllItems') {
 }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    if (isset($_POST['action'])) {
+        if ($_POST['action'] === "deleteItem") {
+            deleteItem(); exit;
+        } elseif ($_POST['action'] === "updateItem") {
+            updateItem(); exit;
+        }
+    }
     insertItem();
     exit;
 }
