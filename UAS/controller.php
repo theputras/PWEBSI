@@ -248,16 +248,29 @@ function insertPenjualan() {
 
 function getPenjualan() {
     global $conn;
-    $result = $conn->query("SELECT * FROM item ORDER BY kode_item ASC");
-    $items = [];
+    
+    $sql = "SELECT 
+                mp.kodetr,
+                mp.tanggal,
+                mp.konsumen,
+                mp.total_penjualan,
+                mp.totalqty
+            FROM masterpenjualan mp
+            ORDER BY mp.tanggal DESC";
+
+    $result = $conn->query($sql);
+    $penjualan = [];
+
     while ($row = $result->fetch_assoc()) {
-        $items[] = $row;
+        $penjualan[] = $row;
     }
+
     echo json_encode([
         "status" => "success",
-        "data" => $items
+        "data" => $penjualan
     ]);
 }
+
 
 function getItemOptions() {
     global $conn;
@@ -318,6 +331,8 @@ if (isset($_GET['action'])) {
             getAllItems(); exit;
         } elseif ($_GET['action'] === "getItemByKode") {
             getItemByKode(); exit;
+        } elseif ($_GET['action'] === "getPenjualan") {
+            getPenjualan(); exit;
         } 
 }
 }
