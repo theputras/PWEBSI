@@ -48,6 +48,7 @@
 </div>
 
 <script>
+window.daftarItem = [];
 $(document).ready(function() {
   // Load halaman default (Penjualan)
   $("#isi").load("./penjualan.php");

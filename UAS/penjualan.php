@@ -31,11 +31,11 @@
       </div>
       <div class="col-md-2">
         <label>Harga</label>
-        <input type="number" id="harga_item" class="form-control" readonly>
+        <input type="text" id="harga_item" class="form-control" readonly>
       </div>
       <div class="col-md-1">
         <label>Qty</label>
-        <input type="number" id="qty_item" class="form-control" min="1" value="1">
+        <input type="number" id="qty_item" class="form-control" min="1" value="0">
       </div>
       <div class="col-md-2">
         <label>Subtotal</label>
@@ -61,7 +61,7 @@
         </tr>
       </thead>
       <tbody></tbody>
-      <tfoot>
+     <tfoot>
         <tr>
           <th colspan="5" class="text-end">Total Qty</th>
           <th id="totalQty">0</th>
@@ -77,8 +77,83 @@
   </form>
 </div>
 
+<hr>
+<h4 class="mb-3">Tabel Transaksi</h4>
+  <table class="table table-bordered mt-3" id="tabelPenjualan">
+      <thead class="table-dark">
+          <tr>
+            <th>Kode Transaksi</th>
+            <th>Tanggal</th>
+            <th>Konsumen</th>
+            <th>Total Qty</th>
+            <th>Total Penjualan</th>
+            <th>Aksi</th>
+  </tr>
+      </thead>
+      <tbody></tbody>
+   
+    </table>
+
+
+<!-- Toast Container -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999">
+  <div id="liveToast" class="toast align-items-center text-white bg-danger border-0" role="showToast">
+    <div class="d-flex">
+      <div class="toast-body" id="toastBody">
+        <!-- isi notif -->
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
 <script>
-let daftarItem = [];
+// let daftarItem = [];
+function showToast(message, type = 'danger') {
+  const toastEl = document.getElementById('liveToast');
+  const toastBody = document.getElementById('toastBody');
+
+  // Ganti warna background toast sesuai tipe
+  toastEl.className = `toast align-items-center text-white bg-${type} border-0`;
+
+  toastBody.innerText = message;
+
+  const toast = new bootstrap.Toast(toastEl);
+  toast.show();
+}
+
+function loadPenjualan() {
+  $.get("./controller.php?action=getPenjualan", function (resRaw) {
+    const res = typeof resRaw === "string" ? JSON.parse(resRaw) : resRaw;
+
+    if (res.status !== "success") {
+      showToast("❌ Gagal ambil data penjualan.");
+      return;
+    }
+
+    const tbody = $("#tabelPenjualan tbody");
+    tbody.empty();
+
+  res.data.forEach((row, i) => {
+  tbody.append(`
+    <tr>
+      <td>${row.kodetr}</td>
+      <td>${row.tanggal}</td>
+      <td>${row.konsumen}</td>
+      <td>${row.totalqty}</td>
+      <td>Rp ${parseFloat(row.total_penjualan).toLocaleString("id-ID")}</td>
+      <td>
+        <button class="btn btn-info btn-sm btnDetail" data-kodetr="${row.kodetr}" title="Lihat Detail">
+          🔍
+        </button>
+      </td>
+    </tr>
+  `);
+});
+
+  });
+}
+
+
 
 function updateTabel() {
   const tbody = $("#tabelItem tbody");
@@ -95,25 +170,39 @@ function updateTabel() {
         <td>${item.kode}</td>
         <td>${item.nama}</td>
         <td>${item.satuan}</td>
-        <td>${item.harga}</td>
+        <td>Rp ${item.harga.toLocaleString("id-ID")}</td>
         <td>${item.qty}</td>
-        <td>${item.subtotal}</td>
+        <td>Rp ${item.subtotal.toLocaleString("id-ID")}</td>
       </tr>
     `);
   });
 
   $("#totalQty").text(totalQty);
-  $("#totalHarga").text("Rp " + totalHarga.toLocaleString());
+  $("#totalHarga").text("Rp " + totalHarga.toLocaleString("id-ID"));
 }
 
+
 $(document).ready(function () {
+loadPenjualan(); // ambil data saat pertama buka halaman
+
   // Ambil data item ke dropdown
-  $.get("./controller.php?action=getItemsOptions", function (resRaw) {
-    const res = typeof resRaw === "string" ? JSON.parse(resRaw) : resRaw;
-    if (res.status === "success") {
-      $("#kode_item").html(res.options);
-    }
-  });
+  const $dropdown = $('#kode_item');
+
+  if ($dropdown.length > 0) {
+    $.get('./controller.php?action=getItemsOptions', function (resRaw) {
+      const res = typeof resRaw === "string" ? JSON.parse(resRaw) : resRaw;
+
+      if (res.status === 'success') {
+        let html = '<option value="">Pilih Barang</option>';
+        html += res.options; // pastiin ini udah <option ...>
+        $dropdown.html(html);
+      } else {
+        $dropdown.html('<option value="">Gagal memuat data</option>');
+      }
+    });
+  } else {
+    console.warn('#kode_item not found di DOM!');
+  }
 
   // Saat kode_item dipilih, isi nama + satuan + harga
 $("#kode_item").on("change", function () {
@@ -123,42 +212,59 @@ $("#kode_item").on("change", function () {
   $.get("./controller.php?action=getItemByKode&kode_item=" + kode, function (resRaw) {
     const res = typeof resRaw === "string" ? JSON.parse(resRaw) : resRaw;
     if (res.status === "success") {
-      const data = res.data;
-      $("#nama_item").val(data.nama);
-      $("#satuan_item").val(data.satuan);
-      $("#harga_item").val(data.harga);
-      $("#qty_item").val(1);
-      $("#subtotal_item").val(data.harga);
-    }
+  const data = res.data;
+  const harga = parseFloat(data.harga);
+
+  $("#nama_item").val(data.nama);
+  $("#satuan_item").val(data.satuan);
+
+  // Simpan angka asli di .data("raw")
+  $("#harga_item").val(harga.toLocaleString("id-ID")).data("raw", harga);
+  $("#qty_item").val(1);
+  $("#subtotal_item").val(harga.toLocaleString("id-ID"));
+}
+
   });
 });
+
+// $("#qty_item").on("input", function () {
+//   const qty = parseInt($(this).val()) || 0;
+//   const harga = parseFloat($("#harga_item").val()) || 0;
+//   $("#subtotal_item").val(qty * harga);
+// });
+
+
+//   $("#qty_item").on("input", function () {
+//     const qty = parseInt(this.value) || 1;
+//     const harga = parseFloat($("#harga_item").val()) || 0;
+//     $("#subtotal_item").val(harga * qty);
+//   });
 
 $("#qty_item").on("input", function () {
-  const qty = parseInt($(this).val()) || 0;
+  const qty = parseInt(this.value) || 0;
   const harga = parseFloat($("#harga_item").val()) || 0;
-  $("#subtotal_item").val(qty * harga);
+  const subtotal = harga * qty;
+
+  $("#subtotal_item").val(subtotal.toLocaleString("id-ID"));
 });
 
 
-  $("#qty_item").on("input", function () {
-    const qty = parseInt(this.value) || 1;
-    const harga = parseFloat($("#harga_item").val()) || 0;
-    $("#subtotal_item").val(harga * qty);
-  });
+$("#btnTambahItem").on("click", function () {
+  const kode = $("#kode_item").val();
+  const nama = $("#nama_item").val();
+  const satuan = $("#satuan_item").val();
 
-  $("#btnTambahItem").on("click", function () {
-    const kode = $("#kode_item").val();
-    const nama = $("#nama_item").val();
-    const satuan = $("#satuan_item").val();
-    const harga = parseFloat($("#harga_item").val());
-    const qty = parseInt($("#qty_item").val());
-    const subtotal = harga * qty;
+  // ✅ HARGA & QTY HARUS DIPARSE DARI ANGKA MURNI!
+  const harga = parseFloat($("#harga_item").data("raw")); // ambil dari .data("raw")
+  const qty = parseInt($("#qty_item").val());
+  const subtotal = harga * qty;
 
-    if (!kode || qty < 1) return alert("Pilih item dan qty valid!");
+  if (!kode || qty < 1) return showToast("Pilih item dan qty valid!");
 
-    daftarItem.push({ kode, nama, satuan, harga, qty, subtotal });
-    updateTabel();
-  });
+  daftarItem.push({ kode, nama, satuan, harga, qty, subtotal });
+  updateTabel();
+});
+
 
   // Hapus baris item
   $(document).on("click", ".btnHapus", function () {
@@ -168,26 +274,63 @@ $("#qty_item").on("input", function () {
   });
 
   // Submit form
-  $("#formTransaksi").on("submit", function (e) {
-    e.preventDefault();
-    const konsumen = $(this).find('[name="konsumen"]').val();
-    if (daftarItem.length === 0) return alert("Isi minimal satu barang!");
+$("#formTransaksi").on("submit", function (e) {
+  e.preventDefault();
 
-    daftarItem.forEach(item => {
-      $.post("./controller.php", {
-        action: "insertPenjualan",
-        kode_item: item.kode,
-        konsumen: konsumen,
-        qty: item.qty
-      }, function (res) {
-        console.log(res);
-      });
-    });
+  const konsumen = $(this).find('[name="konsumen"]').val();
+  if (daftarItem.length === 0) return showToast("Isi minimal satu barang!");
 
-    alert("Transaksi berhasil disimpan.");
-    daftarItem = [];
-    updateTabel();
-    this.reset();
+  // Susun ulang daftarItem biar sesuai struktur server
+  const items = daftarItem.map(item => ({
+    kode_item: item.kode,
+    nama: item.nama,
+    satuan: item.satuan,
+    harga: item.harga,
+    qty: item.qty
+  }));
+
+  $.post("./controller.php", {
+    action: "insertPenjualan",
+    konsumen: konsumen,
+    items: items
+  }, function (resRaw) {
+    const res = typeof resRaw === "string" ? JSON.parse(resRaw) : resRaw;
+
+    if (res.status === "success") {
+      showToast(res.message);
+      daftarItem = [];
+      updateTabel();
+      $("#formTransaksi")[0].reset();
+      loadPenjualan(); // 🚀 Tambahin ini biar tabel bawah auto update
+    } else {
+      showToast(res.message);
+    }
   });
+});
+
+
+$(document).on("click", ".btnDetail", function () {
+  const kodetr = $(this).data("kodetr");
+
+  $.get(`./controller.php?action=detailPenjualan&kodetr=${kodetr}`, function (resRaw) {
+    const res = typeof resRaw === "string" ? JSON.parse(resRaw) : resRaw;
+
+    if (res.status === "success") {
+      let pesan = `Detail Transaksi #${kodetr}\n\n`;
+
+      res.data.forEach((item, i) => {
+        pesan += `${i + 1}. ${item.nama} (${item.kode_item})\n`;
+        pesan += `   Qty: ${item.qty} ${item.satuan}, Harga: Rp ${parseFloat(item.harga).toLocaleString("id-ID")}, Subtotal: Rp ${parseFloat(item.subtotal).toLocaleString("id-ID")}\n\n`;
+      });
+
+      showToast(pesan);
+    } else {
+      showToast(res.message);
+    }
+  });
+});
+
+
+
 });
 </script>

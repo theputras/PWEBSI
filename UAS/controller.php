@@ -29,8 +29,8 @@ function insertItem() {
 
     $nama   = $_POST['nama']   ?? '';
     $satuan = $_POST['satuan'] ?? '';
-    $harga  = $_POST['harga']  ?? '';
-    $jumlah_item = $_POST['jumlah_item'] ?? 0; // default ke 0 kalau kosong
+    $harga = floatval($_POST['harga'] ?? 0);
+     $jumlah_item = intval($_POST['jumlah_item'] ?? 0);
 
 
     if ($nama === '' || $satuan === '' || $harga === '') {
@@ -66,8 +66,8 @@ function insertItem() {
         return;
     }
 
-    $stmt = $conn->prepare("INSERT INTO item (kode_item, nama, satuan, harga, jumlah_item) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("sssd", $kode_item, $nama, $satuan, $harga, $jumlah_item);
+    $stmt = $conn->prepare("INSERT INTO item (kode_item, nama, satuan, harga, jumlah_item) VALUES (?, ?, ?, ?, ?)");
+    $stmt->bind_param("sssdi", $kode_item, $nama, $satuan, $harga, $jumlah_item);
 
     if ($stmt->execute()) {
         echo json_encode([
@@ -141,7 +141,7 @@ function updateItem() {
     }
 
 $stmt = $conn->prepare("UPDATE item SET nama = ?, satuan = ?, harga = ?, jumlah_item = ? WHERE kode_item = ?");
-$stmt->bind_param("ssdss", $nama, $satuan, $harga, $jumlah_item, $kode_item);
+$stmt->bind_param("ssdis", $nama, $satuan, $harga, $jumlah_item, $kode_item);
 
     if ($stmt->execute()) {
         echo json_encode(["status" => "success", "message" => "✅ Item berhasil diupdate."]);
@@ -220,17 +220,17 @@ function insertPenjualan() {
         $kodetr = $conn->insert_id;
 
         // Insert ke detail
-        $stmtDetail = $conn->prepare("INSERT INTO penjualan_detail (kodetr, kode_item, harga, qty, subtotal) VALUES (?, ?, ?, ?, ?)");
+        $stmtDetail = $conn->prepare("INSERT INTO detailpenjualan (kodetr, kode_item, jumlah, subtotal) VALUES (?, ?, ?, ?)");
 
-        foreach ($items as $item) {
-            $kode_item = $item['kode_item'];
-            $harga = floatval($item['harga']);
-            $qty = intval($item['qty']);
-            $subtotal = $harga * $qty;
+     foreach ($items as $item) {
+    $kode_item = $item['kode_item'];
+    $harga = floatval($item['harga']); // masih dipakai buat subtotal
+    $qty = intval($item['qty']);
+    $subtotal = $harga * $qty;
 
-            $stmtDetail->bind_param("issid", $kodetr, $kode_item, $harga, $qty, $subtotal);
-            $stmtDetail->execute();
-        }
+    $stmtDetail->bind_param("isid", $kodetr, $kode_item, $qty, $subtotal);
+    $stmtDetail->execute();
+}
 
         $conn->commit();
         echo json_encode([
@@ -248,15 +248,17 @@ function insertPenjualan() {
 
 function getPenjualan() {
     global $conn;
-    
-    $sql = "SELECT 
-                mp.kodetr,
-                mp.tanggal,
-                mp.konsumen,
-                mp.total_penjualan,
-                mp.totalqty
-            FROM masterpenjualan mp
-            ORDER BY mp.tanggal DESC";
+
+    $sql = "
+               SELECT 
+            mp.kodetr,
+            mp.tanggal,
+            mp.konsumen,
+            mp.total_penjualan,
+            mp.totalqty
+        FROM masterpenjualan mp
+        ORDER BY mp.tanggal DESC
+    ";
 
     $result = $conn->query($sql);
     $penjualan = [];
@@ -272,13 +274,14 @@ function getPenjualan() {
 }
 
 
+
 function getItemOptions() {
     global $conn;
 
     $result = $conn->query("SELECT kode_item, nama FROM item ORDER BY nama ASC");
     $options = "";
     while ($row = $result->fetch_assoc()) {
-        $options .= "<option value='{$row['kode_item']}'>{$row['nama']} ({$row['kode_item']})</option>";
+        $options .= "<option value='{$row['kode_item']}'>{$row['nama']} - {$row['kode_item']}</option>";
     }
 
     echo json_encode([
@@ -321,6 +324,49 @@ function getItemByKode() {
 }
 
 
+function detailPenjualan() {
+    global $conn;
+
+    if (!isset($_GET['kodetr'])) {
+        echo json_encode([
+            "status" => "error",
+            "message" => "⚠️ Parameter kodetr tidak ditemukan."
+        ]);
+        return;
+    }
+
+    $kodetr = $_GET['kodetr'];
+
+    $sql = "
+        SELECT 
+            dp.kode_item,
+            i.nama,
+            i.satuan,
+            dp.jumlah AS qty,
+            dp.subtotal,
+            (dp.subtotal / dp.jumlah) AS harga
+        FROM detailpenjualan dp
+        JOIN item i ON dp.kode_item = i.kode_item
+        WHERE dp.kodetr = ?
+    ";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $kodetr);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $detail = [];
+    while ($row = $result->fetch_assoc()) {
+        $detail[] = $row;
+    }
+
+    echo json_encode([
+        "status" => "success",
+        "data" => $detail
+    ]);
+}
+
+
 // Routing
 
 if ($_SERVER["REQUEST_METHOD"] === "GET") {
@@ -333,6 +379,8 @@ if (isset($_GET['action'])) {
             getItemByKode(); exit;
         } elseif ($_GET['action'] === "getPenjualan") {
             getPenjualan(); exit;
+        } elseif ($_GET['action'] === "detailPenjualan") {
+            detailPenjualan(); exit;
         } 
 }
 }
