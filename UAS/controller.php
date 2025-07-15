@@ -1,19 +1,22 @@
 <?php
 include "koneksi.php";
 
+
+
+
+
 // Fungsi ambil semua data item
 function getAllItems() {
+
     global $conn;
     $result = $conn->query("SELECT * FROM item ORDER BY kode_item ASC");
     $items = [];
     while ($row = $result->fetch_assoc()) {
         $items[] = $row;
     }
-    echo json_encode([
-        "status" => "success",
-        "data" => $items
-    ]);
+    echo json_encode(["status" => "success", "data" => $items]);
 }
+
 
 // Fungsi insert item
 function insertItem() {
@@ -174,6 +177,7 @@ function deleteMultipleItems() {
 
 
 
+
 // Penjualan
 function insertPenjualan() {
     global $conn;
@@ -248,9 +252,8 @@ function insertPenjualan() {
 
 function getPenjualan() {
     global $conn;
-
     $sql = "
-               SELECT 
+        SELECT 
             mp.kodetr,
             mp.tanggal,
             mp.konsumen,
@@ -259,36 +262,27 @@ function getPenjualan() {
         FROM masterpenjualan mp
         ORDER BY mp.tanggal DESC
     ";
-
     $result = $conn->query($sql);
     $penjualan = [];
-
     while ($row = $result->fetch_assoc()) {
         $penjualan[] = $row;
     }
-
-    echo json_encode([
-        "status" => "success",
-        "data" => $penjualan
-    ]);
+    echo json_encode(["status" => "success", "data" => $penjualan]);
 }
+
 
 
 
 function getItemOptions() {
     global $conn;
-
     $result = $conn->query("SELECT kode_item, nama FROM item ORDER BY nama ASC");
     $options = "";
     while ($row = $result->fetch_assoc()) {
         $options .= "<option value='{$row['kode_item']}'>{$row['nama']} - {$row['kode_item']}</option>";
     }
-
-    echo json_encode([
-        "status" => "success",
-        "options" => $options
-    ]);
+    echo json_encode(["status" => "success", "options" => $options]);
 }
+
 
 
 function getItemByKode() {
@@ -366,6 +360,146 @@ function detailPenjualan() {
     ]);
 }
 
+// Pembelian
+function insertPembelian() {
+    global $conn;
+
+    $kode_supplier = $_POST['kode_supplier'] ?? '';
+    $total_biaya = $_POST['total_biaya'] ?? 0;
+    $status_pembelian = $_POST['status_pembelian'] ?? 'pending';
+
+    // Validasi input
+    if (empty($kode_supplier) || $total_biaya <= 0) {
+        echo json_encode(["status" => "error", "message" => "Data tidak lengkap atau invalid."]);
+        return;
+    }
+
+    // Insert into pembelian
+    $stmt = $conn->prepare("INSERT INTO pembelian (kode_supplier, total_biaya, status_pembelian) VALUES (?, ?, ?)");
+    $stmt->bind_param("sds", $kode_supplier, $total_biaya, $status_pembelian);
+    if ($stmt->execute()) {
+        $id_pembelian = $stmt->insert_id;
+
+        // Insert detail pembelian (misalnya kita dapat data item dari POST)
+        if (!empty($_POST['items']) && is_array($_POST['items'])) {
+            $items = $_POST['items'];
+            foreach ($items as $item) {
+                $kode_item = $item['kode_item'];
+                $jumlah = $item['jumlah'];
+                $harga_beli = $item['harga_beli'];
+                $subtotal = $jumlah * $harga_beli;
+
+                $detailStmt = $conn->prepare("INSERT INTO detail_pembelian (id_pembelian, kode_item, jumlah, harga_beli, subtotal) VALUES (?, ?, ?, ?, ?)");
+                $detailStmt->bind_param("isidd", $id_pembelian, $kode_item, $jumlah, $harga_beli, $subtotal);
+                $detailStmt->execute();
+            }
+        }
+
+        echo json_encode(["status" => "success", "message" => "Pembelian berhasil ditambahkan."]);
+    } else {
+        echo json_encode(["status" => "error", "message" => "Terjadi kesalahan saat menambahkan pembelian."]);
+    }
+}
+
+function getPembelian() {
+    global $conn;
+
+    // Query untuk mengambil pembelian
+    $sql = "SELECT * FROM pembelian";
+    $result = $conn->query($sql);
+
+    if ($result->num_rows > 0) {
+        $pembelian = [];
+        while ($row = $result->fetch_assoc()) {
+            $pembelian[] = $row;
+        }
+
+        echo json_encode(["status" => "success", "data" => $pembelian]);
+    } else {
+        echo json_encode(["status" => "error", "message" => "Data pembelian tidak ditemukan."]);
+    }
+}
+
+
+
+function updatePembelian() {
+    global $conn;
+
+    $id_pembelian = $_POST['id_pembelian'] ?? 0;
+    $kode_supplier = $_POST['kode_supplier'] ?? '';
+    $total_biaya = $_POST['total_biaya'] ?? 0;
+    $status_pembelian = $_POST['status_pembelian'] ?? 'pending';
+
+    if ($id_pembelian <= 0 || empty($kode_supplier) || $total_biaya <= 0) {
+        echo json_encode(["status" => "error", "message" => "Data tidak lengkap atau invalid."]);
+        return;
+    }
+
+    // Update pembelian
+    $stmt = $conn->prepare("UPDATE pembelian SET kode_supplier = ?, total_biaya = ?, status_pembelian = ? WHERE id_pembelian = ?");
+    $stmt->bind_param("sdsi", $kode_supplier, $total_biaya, $status_pembelian, $id_pembelian);
+
+    if ($stmt->execute()) {
+        echo json_encode(["status" => "success", "message" => "Pembelian berhasil diupdate."]);
+    } else {
+        echo json_encode(["status" => "error", "message" => "Terjadi kesalahan saat mengupdate pembelian."]);
+    }
+}
+
+
+function deletePembelian() {
+    global $conn;
+
+    $id_pembelian = $_POST['id_pembelian'] ?? 0;
+
+    if ($id_pembelian <= 0) {
+        echo json_encode(["status" => "error", "message" => "ID pembelian tidak valid."]);
+        return;
+    }
+
+    // Hapus detail pembelian terkait
+    $conn->query("DELETE FROM detail_pembelian WHERE id_pembelian = $id_pembelian");
+
+    // Hapus pembelian
+    $stmt = $conn->prepare("DELETE FROM pembelian WHERE id_pembelian = ?");
+    $stmt->bind_param("i", $id_pembelian);
+    if ($stmt->execute()) {
+        echo json_encode(["status" => "success", "message" => "Pembelian berhasil dihapus."]);
+    } else {
+        echo json_encode(["status" => "error", "message" => "Terjadi kesalahan saat menghapus pembelian."]);
+    }
+}
+
+
+
+function getDetailPembelian() {
+    global $conn;
+
+    $id_pembelian = $_GET['id_pembelian'] ?? 0;
+
+    if ($id_pembelian <= 0) {
+        echo json_encode(["status" => "error", "message" => "ID pembelian tidak valid."]);
+        return;
+    }
+
+    // Query untuk mengambil detail pembelian
+    $sql = "SELECT * FROM detail_pembelian WHERE id_pembelian = $id_pembelian";
+    $result = $conn->query($sql);
+
+    if ($result->num_rows > 0) {
+        $detail_pembelian = [];
+        while ($row = $result->fetch_assoc()) {
+            $detail_pembelian[] = $row;
+        }
+
+        echo json_encode(["status" => "success", "data" => $detail_pembelian]);
+    } else {
+        echo json_encode(["status" => "error", "message" => "Detail pembelian tidak ditemukan."]);
+    }
+}
+
+
+
 
 // Routing
 
@@ -381,6 +515,10 @@ if (isset($_GET['action'])) {
             getPenjualan(); exit;
         } elseif ($_GET['action'] === "detailPenjualan") {
             detailPenjualan(); exit;
+        }  elseif ($_GET['action'] === "getPembelian") {
+            getPembelian(); exit;
+        }   elseif ($_GET['action'] === "getDetailPembelian") {
+            getDetailPembelian(); exit;
         } 
 }
 }
@@ -395,6 +533,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             deleteMultipleItems(); exit; // 🛠️ TAMBAH INI BIAR DIA DIKENAL
         } elseif ($_POST['action'] === "insertPenjualan") {
             insertPenjualan(); exit; // 🛠️ TAMBAH INI BIAR DIA DIKENAL
+        } elseif ($_POST['action'] === "insertPembelian") {
+            insertPembelian(); exit; // 🛠️ TAMBAH INI BIAR DIA DIKENAL
+        } elseif ($_POST['action'] === "updatePembelian") {
+            updatePembelian(); exit; // 🛠️ TAMBAH INI BIAR DIA DIKENAL
+        } elseif ($_POST['action'] === "deletePembelian") {
+            deletePembelian(); exit; // 🛠️ TAMBAH INI BIAR DIA DIKENAL
         }
     }
     insertItem(); // ⬅️ Biarkan jadi fallback kalau gak ada action, tapi gak error aneh
