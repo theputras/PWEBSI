@@ -2,8 +2,8 @@
 
 
 // Ambil variabel dari .env
-$host = '0.tcp.ap.ngrok.io';
-$port = '19849';
+$host = '41.216.191.160';
+$port = '3306';
 $dbname = 'tugas';
 $user = 'mobile1';
 $pass = 'mobile121';
