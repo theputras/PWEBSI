@@ -1,80 +1,90 @@
 <?php include "controller.php"; ?>
 
 <div class="container">
-  <h4 class="mb-3">Transaksi Penjualan</h4>
-  <form id="formTransaksi">
-    <div class="row mb-3">
-      <div class="col-md-3">
-        <label>Tanggal</label>
-        <input type="date" name="tanggal" class="form-control" value="<?= date('Y-m-d') ?>" required>
-      </div>
-      <div class="col-md-3">
-        <label>Konsumen</label>
-        <input type="text" name="konsumen" class="form-control" required>
-      </div>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">Transaksi Penjualan</h4>
+    <button class="btn btn-success" type="button" data-bs-toggle="collapse" data-bs-target="#formTransaksiCollapse" aria-expanded="false" aria-controls="formTransaksiCollapse">
+      Tambah Transaksi Baru
+    </button>
+  </div>
+
+  <div class="collapse" id="formTransaksiCollapse">
+    <div class="card card-body mb-4">
+      <form id="formTransaksi">
+        <div class="row mb-3">
+          <div class="col-md-3">
+            <label>Tanggal</label>
+            <input type="date" name="tanggal" class="form-control" value="<?= date('Y-m-d') ?>" required>
+          </div>
+          <div class="col-md-3">
+            <label>Konsumen</label>
+            <input type="text" name="konsumen" class="form-control" required>
+          </div>
+        </div>
+
+        <div class="row g-2 align-items-end">
+          <div class="col-md-2">
+            <label>Kode</label>
+            <select class="form-select" id="kode_item">
+              <option value="">Pilih Barang</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label>Nama</label>
+            <input type="text" id="nama_item" class="form-control" readonly>
+          </div>
+          <div class="col-md-1">
+            <label>Satuan</label>
+            <input type="text" id="satuan_item" class="form-control" readonly>
+          </div>
+          <div class="col-md-2">
+            <label>Harga</label>
+            <input type="text" id="harga_item" class="form-control" readonly>
+          </div>
+          <div class="col-md-1">
+            <label>Qty</label>
+            <input type="number" id="qty_item" class="form-control" min="1" value="0">
+          </div>
+          <div class="col-md-2">
+            <label>Subtotal</label>
+            <input type="text" id="subtotal_item" class="form-control" readonly>
+          </div>
+          <div class="col-md-2">
+            <button type="button" class="btn btn-primary w-100" id="btnTambahItem">Tambah</button>
+          </div>
+        </div>
+
+        <hr>
+
+        <table class="table table-bordered mt-3" id="tabelItem">
+          <thead class="table-dark">
+            <tr>
+              <th>Hapus</th>
+              <th>Kode</th>
+              <th>Nama</th>
+              <th>Satuan</th>
+              <th>Harga</th>
+              <th>Qty</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+         <tfoot>
+            <tr>
+              <th colspan="5" class="text-end">Total Qty</th>
+              <th id="totalQty">0</th>
+              <th id="totalHarga">Rp 0</th>
+            </tr>
+          </tfoot>
+        </table>
+
+        <div class="mt-4 d-flex gap-2">
+          <button type="submit" class="btn btn-success">Simpan</button>
+          <button type="reset" class="btn btn-secondary">Cancel</button>
+        </div>
+      </form>
     </div>
-
-    <div class="row g-2 align-items-end">
-      <div class="col-md-2">
-        <label>Kode</label>
-        <select class="form-select" id="kode_item">
-          <option value="">Pilih Barang</option>
-        </select>
-      </div>
-      <div class="col-md-2">
-        <label>Nama</label>
-        <input type="text" id="nama_item" class="form-control" readonly>
-      </div>
-      <div class="col-md-1">
-        <label>Satuan</label>
-        <input type="text" id="satuan_item" class="form-control" readonly>
-      </div>
-      <div class="col-md-2">
-        <label>Harga</label>
-        <input type="text" id="harga_item" class="form-control" readonly>
-      </div>
-      <div class="col-md-1">
-        <label>Qty</label>
-        <input type="number" id="qty_item" class="form-control" min="1" value="0">
-      </div>
-      <div class="col-md-2">
-        <label>Subtotal</label>
-        <input type="text" id="subtotal_item" class="form-control" readonly>
-      </div>
-      <div class="col-md-2">
-        <button type="button" class="btn btn-primary w-100" id="btnTambahItem">Tambah</button>
-      </div>
-    </div>
-
-    <hr>
-
-    <table class="table table-bordered mt-3" id="tabelItem">
-      <thead class="table-dark">
-        <tr>
-          <th>Hapus</th>
-          <th>Kode</th>
-          <th>Nama</th>
-          <th>Satuan</th>
-          <th>Harga</th>
-          <th>Qty</th>
-          <th>Subtotal</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-     <tfoot>
-        <tr>
-          <th colspan="5" class="text-end">Total Qty</th>
-          <th id="totalQty">0</th>
-          <th id="totalHarga">Rp 0</th>
-        </tr>
-      </tfoot>
-    </table>
-
-    <div class="mt-4 d-flex gap-2">
-      <button type="submit" class="btn btn-success">Simpan</button>
-      <button type="reset" class="btn btn-secondary">Cancel</button>
-    </div>
-  </form>
+  </div>
 </div>
 
 <hr>
@@ -102,8 +112,7 @@
         <h5 class="modal-title" id="detailTransaksiModalLabel">Detail Transaksi Penjualan</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
-        <p><strong>Kode Transaksi:</strong> <span id="modalKodeTr"></span></p>
+      <div class="modal-body" id="modalPrintArea"> <p><strong>Kode Transaksi:</strong> <span id="modalKodeTr"></span></p>
         <p><strong>Tanggal:</strong> <span id="modalTanggal"></span></p>
         <p><strong>Konsumen:</strong> <span id="modalKonsumen"></span></p>
 
@@ -131,7 +140,7 @@
         </table>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+        <button type="button" class="btn btn-info" id="btnPrintDetail">Print</button> <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
       </div>
     </div>
   </div>
@@ -148,7 +157,7 @@
   </div>
 </div>
 <script>
-let daftarItem = []; // Pastikan daftarItem dideklarasikan di sini atau di luar fungsi $(document).ready
+// Variabel daftarItem sudah di index.php
 function showToast(message, type = 'danger') {
   const toastEl = document.getElementById('liveToast');
   const toastBody = document.getElementById('toastBody');
@@ -162,40 +171,106 @@ function showToast(message, type = 'danger') {
   toast.show();
 }
 
-function loadPenjualan() {
-  $.get("./controller.php?action=getPenjualan", function (resRaw) {
-    const res = typeof resRaw === "string" ? JSON.parse(resRaw) : resRaw;
-
-    if (res.status !== "success") {
-      showToast("❌ Gagal ambil data penjualan.");
-      return;
-    }
-
+// Fungsi untuk merender tabel penjualan
+function renderPenjualanTable(data) {
     const tbody = $("#tabelPenjualan tbody");
     tbody.empty();
 
-  res.data.forEach((row, i) => {
-  tbody.append(`
-    <tr>
-      <td>${row.kodetr}</td>
-      <td>${row.tanggal}</td>
-      <td>${row.konsumen}</td>
-      <td>${row.totalqty}</td>
-      <td>Rp ${parseFloat(row.total_penjualan).toLocaleString("id-ID")}</td>
-      <td>
-        <button class="btn btn-info btn-sm btnDetail" data-kodetr="${row.kodetr}" title="Lihat Detail"
-          data-tanggal="${row.tanggal}" data-konsumen="${row.konsumen}"
-          data-totalqty="${row.totalqty}" data-totalpenjualan="${row.total_penjualan}">
-          🔍
-        </button>
-      </td>
-    </tr>
-  `);
-});
-
-  });
+    if (data && data.length > 0) {
+        data.forEach((row) => {
+            tbody.append(`
+                <tr>
+                    <td>${row.kodetr}</td>
+                    <td>${row.tanggal}</td>
+                    <td>${row.konsumen}</td>
+                    <td>${row.totalqty}</td>
+                    <td>Rp ${parseFloat(row.total_penjualan).toLocaleString("id-ID")}</td>
+                    <td>
+                        <button class="btn btn-info btn-sm btnDetail" data-kodetr="${row.kodetr}" title="Lihat Detail"
+                            data-tanggal="${row.tanggal}" data-konsumen="${row.konsumen}"
+                            data-totalqty="${row.totalqty}" data-totalpenjualan="${row.total_penjualan}">
+                             <i class="bi bi-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+            `);
+        });
+    } else {
+        tbody.append(`<tr><td colspan="6" class="text-center">Tidak ada data penjualan.</td></tr>`);
+    }
 }
 
+
+function loadPenjualan() {
+    const cacheKey = 'penjualanData';
+    const cachedData = localStorage.getItem(cacheKey);
+    const cacheExpiryTime = 5 * 60 * 1000; // 5 menit
+
+    // 1. Coba muat dari cache dulu (untuk "sat set")
+    if (cachedData) {
+        try {
+            const parsedCache = JSON.parse(cachedData);
+            if (Date.now() - parsedCache.timestamp < cacheExpiryTime) {
+                console.log('Memuat data penjualan dari cache...');
+                renderPenjualanTable(parsedCache.data);
+            } else {
+                console.log('Cache penjualan kadaluarsa, akan diperbarui...');
+                localStorage.removeItem(cacheKey); // Hapus cache kadaluarsa
+            }
+        } catch (e) {
+            console.error("Gagal parsing cache penjualan:", e);
+            localStorage.removeItem(cacheKey);
+        }
+    }
+
+    // 2. Selalu ambil data terbaru dari server di latar belakang
+    $.get("./controller.php?action=getPenjualan", function (resRaw) {
+        const res = typeof resRaw === "string" ? JSON.parse(resRaw) : resRaw;
+
+        if (res.status === "success") {
+            const currentServerData = JSON.stringify(res.data);
+            let isDataChanged = true;
+
+            // Cek apakah data dari server berbeda dengan yang di cache
+            if (cachedData) {
+                try {
+                    const parsedCache = JSON.parse(cachedData);
+                    if (JSON.stringify(parsedCache.data) === currentServerData) {
+                        isDataChanged = false; // Data tidak berubah, tidak perlu render ulang
+                    }
+                } catch (e) {
+                    // Biarkan isDataChanged tetap true jika ada error parsing cache
+                }
+            }
+            
+            // Render hanya jika data berubah atau tidak ada di cache
+            if (isDataChanged) {
+                console.log('Memperbarui data penjualan dari server...');
+                renderPenjualanTable(res.data);
+                // Simpan data terbaru ke cache
+                localStorage.setItem(cacheKey, JSON.stringify({
+                    data: res.data,
+                    timestamp: Date.now()
+                }));
+            } else {
+                console.log('Data penjualan tidak berubah, menggunakan data cache yang ada.');
+            }
+
+        } else {
+            showToast("❌ Gagal ambil data penjualan dari server.");
+            // Jika gagal ambil dari server dan tidak ada cache, tampilkan pesan kosong
+            if (!cachedData) {
+                renderPenjualanTable([]); // Render tabel kosong jika tidak ada cache dan gagal fetch
+            }
+        }
+    }).fail(function() {
+        showToast("⚠️ Gagal terhubung ke server untuk data penjualan.");
+        // Jika request gagal total dan tidak ada cache, tampilkan pesan kosong
+        if (!cachedData) {
+            renderPenjualanTable([]);
+        }
+    });
+}
 
 
 function updateTabel() {
@@ -270,18 +345,6 @@ $("#kode_item").on("change", function () {
   });
 });
 
-// $("#qty_item").on("input", function () {
-//   const qty = parseInt($(this).val()) || 0;
-//   const harga = parseFloat($("#harga_item").val()) || 0;
-//   $("#subtotal_item").val(qty * harga);
-// });
-
-
-//   $("#qty_item").on("input", function () {
-//     const qty = parseInt(this.value) || 1;
-//     const harga = parseFloat($("#harga_item").val()) || 0;
-//     $("#subtotal_item").val(harga * qty);
-//   });
 
 $("#qty_item").on("input", function () {
   const qty = parseInt(this.value) || 0;
@@ -349,6 +412,9 @@ $("#formTransaksi").on("submit", function (e) {
       updateTabel();
       $("#formTransaksi")[0].reset();
       loadPenjualan(); // 🚀 Tambahin ini biar tabel bawah auto update
+      // Tutup form setelah berhasil disimpan
+      const formCollapse = new bootstrap.Collapse(document.getElementById('formTransaksiCollapse'));
+      formCollapse.hide();
     } else {
       showToast(res.message);
     }
@@ -405,7 +471,57 @@ $(document).on("click", ".btnDetail", function () {
     }
   });
 });
+// Fungsi untuk mencetak isi modal
+$('#btnPrintDetail').on('click', function() {
+    const printContents = document.getElementById('modalPrintArea').innerHTML;
+    const originalContents = document.body.innerHTML;
+    const originalHeadContents = document.head.innerHTML; // Simpan isi head asli
 
+    // Gaya untuk cetak
+    const printStyles = `
+        <style>
+            body { margin: 20mm !important; } /* Margins for print */
+            @media print {
+                body { margin: 10mm !important; } /* Less margin for actual print */
+                /* Sembunyikan elemen non-print lainnya jika ada, misalnya navbar, toast, dll */
+                .navbar, .toast, .modal-footer, .btn-close { display: none !important; }
+                /* Atur ulang ukuran tabel agar pas di halaman jika perlu */
+                table { width: 100% !important; border-collapse: collapse !important; }
+                th, td { border: 1px solid #dee2e6 !important; padding: .75rem !important; }
+                .table-dark { background-color: #343a40 !important; color: white !important; -webkit-print-color-adjust: exact; }
+                /* Ensure background colors print */
+            }
+        </style>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    `;
+
+    // Buat HTML lengkap untuk cetak
+    const fullPrintHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Detail Transaksi Penjualan</title>
+            ${printStyles}
+        </head>
+        <body>
+            ${printContents}
+        </body>
+        </html>
+    `;
+
+    // Ganti seluruh konten dokumen dengan konten cetak
+    document.open(); // Buka dokumen untuk penulisan ulang
+    document.write(fullPrintHtml);
+    document.close(); // Tutup dokumen untuk penulisan ulang
+
+    // Cetak
+    window.print();
+
+    // Kembalikan konten asli setelah cetak
+    // Menggunakan location.reload() adalah cara termudah untuk mengembalikan DOM asli
+    // karena mengganti document.body.innerHTML bisa merusak event listener JS.
+    location.reload(); 
+});
 
 });
 </script>
