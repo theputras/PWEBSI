@@ -14,28 +14,28 @@ include "controller.php";
     <div class="card card-body mb-4">
       <form id="formItem" class="row g-3">
         <div class="col-md-3">
-          <label for="kode_item_input" class="form-label">Kode Item</label>
-          <input type="text" name="kode_item" id="kode_item_input" class="form-control" placeholder="Kode Item">
+          <label for="kode_item" class="form-label">Kode Item</label>
+          <input type="text" name="kode_item" id="kode_item" class="form-control" placeholder="Kode Item">
         </div>
         <div class="col-md-3">
-          <label for="nama_input" class="form-label">Nama Item</label>
-          <input type="text" name="nama" id="nama_input" class="form-control" placeholder="Nama Item" required>
+          <label for="nama" class="form-label">Nama Item</label>
+          <input type="text" name="nama" id="nama" class="form-control" placeholder="Nama Item" required>
         </div>
         <div class="col-md-2">
-          <label for="satuan_input" class="form-label">Satuan</label>
-          <input type="text" name="satuan" id="satuan_input" class="form-control" placeholder="Satuan" required>
+          <label for="satuan" class="form-label">Satuan</label>
+          <input type="text" name="satuan" id="satuan" class="form-control" placeholder="Satuan" required>
         </div>    
         <div class="col-md-2">
-          <label for="jumlah_item_input" class="form-label">Jumlah</label>
-          <input type="number" name="jumlah_item" id="jumlah_item_input" class="form-control" placeholder="Jumlah" required>
+          <label for="jumlah_item" class="form-label">Jumlah</label>
+          <input type="number" name="jumlah_item" id="jumlah_item" class="form-control" placeholder="Jumlah" required>
         </div>
         <div class="col-md-2">
-          <label for="harga_beli_input" class="form-label">Harga Beli</label>
-          <input type="number" name="harga_beli" id="harga_beli_input" class="form-control" placeholder="Harga Beli" required>
+          <label for="harga_beli" class="form-label">Harga Beli</label>
+          <input type="number" name="harga_beli" id="harga_beli" class="form-control" placeholder="Harga Beli" required>
         </div>
         <div class="col-md-2">
-          <label for="harga_jual_input" class="form-label">Harga Jual</label>
-          <input type="number" name="harga" id="harga_jual_input" class="form-control" placeholder="Harga Jual" required>
+          <label for="harga_jual" class="form-label">Harga Jual</label>
+          <input type="number" name="harga_jual" id="harga_jual" class="form-control" placeholder="Harga Jual" required>
           </div>
         <div class="col-md-auto">
           <button type="submit" class="btn btn-primary">Simpan</button>
