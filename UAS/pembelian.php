@@ -166,9 +166,9 @@
 <script>
 // showToast() dan daftarItem[] sudah dideklarasikan di index.php
 
-let daftarPembelianItem = []; // Array untuk menampung item yang akan dibeli dalam satu transaksi
-let allItemsDataPembelian = []; // Variabel untuk menyimpan semua data item yang dimuat
+// let daftarPembelianItem = []; // Array untuk menampung item yang akan dibeli dalam satu transaksi
 
+// let allItemsData = []; 
 // Fungsi untuk merender tabel item pembelian di form transaksi
 function updateTabelPembelianItems() {
     const tbody = $("#daftarItemPembelian");
@@ -325,9 +325,9 @@ $(document).ready(function () {
         const res = typeof resRaw === "string" ? JSON.parse(resRaw) : resRaw;
 
         if (res.status === 'success') {
-            allItemsDataPembelian = res.full_data || []; // Simpan data lengkapnya
+            allItemsData = res.full_data || []; // Simpan data lengkapnya
             let datalistHtml = '';
-            allItemsDataPembelian.forEach(item => {
+            allItemsData.forEach(item => {
                 // value dari option adalah kode_item, label adalah apa yang terlihat
                 datalistHtml += `<option value="${item.kode_item}" label="${item.nama} (Stok: ${item.jumlah_item}, Harga: Rp. ${parseFloat(item.harga).toLocaleString("id-ID")})"></option>`;
             });
@@ -348,8 +348,8 @@ $(document).ready(function () {
             return;
         }
 
-        // Cari item di allItemsDataPembelian (yang sudah dimuat)
-        const selectedItem = allItemsDataPembelian.find(item => item.kode_item === kode);
+        // Cari item di allItemsData (yang sudah dimuat)
+        const selectedItem = allItemsData.find(item => item.kode_item === kode);
 
         if (selectedItem) {
             const hargaBeli = parseFloat(selectedItem.harga_beli); // Ambil harga_beli dari data

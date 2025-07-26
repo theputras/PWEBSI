@@ -62,6 +62,7 @@ $icon = $db_connected ? '✅' : '❌';
 let daftarItem = []; 
 let daftarPembelianItem = []; // Array untuk menampung item yang akan dibeli dalam satu transaksi
 let allItemsData = []; 
+let allItemsDataPembelian = []; // Variabel untuk menyimpan semua data item yang dimuat
 $(document).ready(function() {
   // Load halaman default (Penjualan)
   $("#isi").load("./penjualan.php");
