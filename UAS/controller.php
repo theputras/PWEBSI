@@ -123,6 +123,62 @@ function deleteItem() {
     }
 }
 
+// function deleteItem() {
+//     global $conn;
+
+//     if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+//         echo json_encode([
+//             "status" => "error",
+//             "message" => "⚠️ Harus menggunakan metode POST."
+//         ]);
+//         return;
+//     }
+
+//     if (empty($_POST['kode_item'])) {
+//         echo json_encode([
+//             "status" => "error",
+//             "message" => "⚠️ kode_item item tidak boleh kosong."
+//         ]);
+//         return;
+//     }
+
+//     $kode_item = $_POST['kode_item'];
+
+//     $conn->begin_transaction(); // Mulai transaksi
+
+//     try {
+//         // 1. Hapus record dari detailpembelian yang terkait dengan item ini
+//         $stmt_del_detailpembelian = $conn->prepare("DELETE FROM detailpembelian WHERE kode_item = ?");
+//         $stmt_del_detailpembelian->bind_param("s", $kode_item);
+//         $stmt_del_detailpembelian->execute();
+
+//         // 2. Hapus record dari detailpenjualan yang terkait dengan item ini
+//         $stmt_del_detailpenjualan = $conn->prepare("DELETE FROM detailpenjualan WHERE kode_item = ?");
+//         $stmt_del_detailpenjualan->bind_param("s", $kode_item);
+//         $stmt_del_detailpenjualan->execute();
+
+//         // 3. Sekarang, hapus item dari tabel item
+//         $stmt = $conn->prepare("DELETE FROM item WHERE kode_item = ?");
+//         $stmt->bind_param("s", $kode_item);
+        
+//         if ($stmt->execute()) {
+//             $conn->commit(); // Commit transaksi jika semua berhasil
+//             echo json_encode([
+//                 "status" => "success",
+//                 "message" => "🗑️ Item berhasil dihapus beserta detail terkait."
+//             ]);
+//         } else {
+//             throw new Exception("Gagal menghapus item.");
+//         }
+//     } catch (Exception $e) {
+//         $conn->rollback(); // Rollback transaksi jika ada kesalahan
+//         echo json_encode([
+//             "status" => "error",
+//             "message" => "❌ Gagal menghapus item: " . $e->getMessage()
+//         ]);
+//     }
+// }
+
 
 function updateItem() {
     global $conn;
@@ -175,6 +231,44 @@ function deleteMultipleItems() {
         echo json_encode(["status" => "error", "message" => "❌ Gagal menghapus item."]);
     }
 }
+
+// function deleteMultipleItems() {
+//     global $conn;
+
+//     $kodeList = $_POST['kode_list'] ?? [];
+
+//     if (!is_array($kodeList) || count($kodeList) === 0) {
+//         echo json_encode(["status" => "error", "message" => "⚠️ Tidak ada data terpilih."]);
+//         return;
+//     }
+
+//     $conn->begin_transaction(); // Mulai transaksi
+
+//     try {
+//         foreach ($kodeList as $kode_item) {
+//             // Hapus record dari detailpembelian yang terkait dengan item ini
+//             $stmt_del_detailpembelian = $conn->prepare("DELETE FROM detailpembelian WHERE kode_item = ?");
+//             $stmt_del_detailpembelian->bind_param("s", $kode_item);
+//             $stmt_del_detailpembelian->execute();
+
+//             // Hapus record dari detailpenjualan yang terkait dengan item ini
+//             $stmt_del_detailpenjualan = $conn->prepare("DELETE FROM detailpenjualan WHERE kode_item = ?");
+//             $stmt_del_detailpenjualan->bind_param("s", $kode_item);
+//             $stmt_del_detailpenjualan->execute();
+
+//             // Hapus item dari tabel item
+//             $stmt_del_item = $conn->prepare("DELETE FROM item WHERE kode_item = ?");
+//             $stmt_del_item->bind_param("s", $kode_item);
+//             $stmt_del_item->execute();
+//         }
+
+//         $conn->commit(); // Commit transaksi jika semua berhasil
+//         echo json_encode(["status" => "success", "message" => "✅ Berhasil menghapus beberapa item beserta detail terkait."]);
+//     } catch (Exception $e) {
+//         $conn->rollback(); // Rollback transaksi jika ada kesalahan
+//         echo json_encode(["status" => "error", "message" => "❌ Gagal menghapus item: " . $e->getMessage()]);
+//     }
+// }
 
 
 
@@ -391,6 +485,7 @@ function insertPembelian() {
     }
 
     // Ambil data dari POST request
+    $tanggal_pembelian = $_POST['tanggal_pembelian'] ?? date('Y-m-d'); // Tanggal pembelian
     $kode_supplier = $_POST['kode_supplier'] ?? '';
     $items_pembelian = $_POST['items_pembelian'] ?? []; // Ini adalah array item yang dibeli
 
@@ -413,8 +508,9 @@ function insertPembelian() {
         }
 
         // Insert ke tabel master `pembelian`
-        $stmt_master = $conn->prepare("INSERT INTO pembelian (kode_supplier, total_biaya, status_pembelian) VALUES (?, ?, 'pending')");
-        $stmt_master->bind_param("sd", $kode_supplier, $total_biaya);
+        // Perhatikan: status_pembelian default 'pending'
+        $stmt_master = $conn->prepare("INSERT INTO pembelian (kode_supplier, tanggal_pembelian, total_biaya, status_pembelian) VALUES (?, ?, ?, 'pending')");
+        $stmt_master->bind_param("ssd", $kode_supplier, $tanggal_pembelian, $total_biaya);
         $stmt_master->execute();
         $id_pembelian = $conn->insert_id; // Ambil ID pembelian yang baru saja dibuat
 
@@ -442,12 +538,10 @@ function insertPembelian() {
             $stmt_update_stok->execute();
         }
 
-        // Commit transaksi jika semua operasi berhasil
         $conn->commit();
         echo json_encode(["status" => "success", "message" => "✅ Pembelian berhasil ditambahkan dengan ID: " . $id_pembelian]);
 
     } catch (Exception $e) {
-        // Rollback transaksi jika terjadi kesalahan
         $conn->rollback();
         echo json_encode(["status" => "error", "message" => "❌ Gagal menambahkan pembelian: " . $e->getMessage()]);
     }
@@ -555,19 +649,18 @@ function deletePembelian() {
 function getDetailPembelian() {
     global $conn;
 
-    $id_pembelian = $_GET['id_pembelian'] ?? 0;
-
-    if ($id_pembelian <= 0) {
+    if (!isset($_GET['id_pembelian'])) {
         echo json_encode(["status" => "error", "message" => "ID pembelian tidak valid."]);
         return;
     }
+
+    $id_pembelian = $_GET['id_pembelian'];
 
     // Query untuk mengambil detail pembelian
     $sql = "
         SELECT 
             dp.kode_item,
             i.nama,
-            i.satuan,
             dp.jumlah,
             dp.harga_beli,
             dp.subtotal
@@ -599,7 +692,7 @@ function getSupplierOptions() {
     $result = $conn->query("SELECT kode_supplier, nama_supplier FROM supplier ORDER BY nama_supplier ASC");
     $options = "";
     while ($row = $result->fetch_assoc()) {
-        $options .= "<option value='{$row['kode_supplier']}'>{$row['nama_supplier']}</option>";
+        $options .= "<option value='{$row['kode_supplier']}'>{$row['nama_supplier']} - {$row['kode_supplier']}</option>";
     }
     echo json_encode(["status" => "success", "options" => $options]);
 }
@@ -741,7 +834,7 @@ if (isset($_GET['action'])) {
             getPembelian(); exit;
         }   elseif ($_GET['action'] === "getDetailPembelian") {
             getDetailPembelian(); exit;
-        } elseif ($_GET['action'] === "getSupplierOptions") {
+        } elseif ($_GET['action'] === "getSupplierOptions") { // Added for Pembelian
             getSupplierOptions(); exit;
         } elseif ($_GET['action'] === "getAllSuppliers") { // Tambahkan routing untuk get all suppliers
             getAllSuppliers(); exit;
@@ -767,13 +860,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             deletePembelian(); exit;
         } elseif ($_POST['action'] === "insertItem") {
             insertItem(); exit;
-        } elseif ($_POST['action'] === "insertSupplier") { // Tambahkan routing untuk insert supplier
+        } elseif ($_POST['action'] === "insertSupplier") {
             insertSupplier(); exit;
-        } elseif ($_POST['action'] === "updateSupplier") { // Tambahkan routing untuk update supplier
+        } elseif ($_POST['action'] === "updateSupplier") {
             updateSupplier(); exit;
-        } elseif ($_POST['action'] === "deleteSupplier") { // Tambahkan routing untuk delete supplier
+        } elseif ($_POST['action'] === "deleteSupplier") {
             deleteSupplier(); exit;
         }
     }
-    exit; // Pastikan tidak ada aksi default jika tidak ada action yang cocok
+    // Fallback if no action is specified in POST, assuming it's insertItem
+    // This part might need refinement depending on overall API design philosophy
+    // insertItem(); // ⬅️ Dihapus agar tidak menjadi fallback yang tidak jelas
+    exit;
 }
