@@ -60,7 +60,8 @@ $icon = $db_connected ? '✅' : '❌';
 <script>
 // Deklarasi daftarItem di sini agar hanya sekali
 let daftarItem = []; 
-
+let daftarPembelianItem = []; // Array untuk menampung item yang akan dibeli dalam satu transaksi
+let allItemsData = []; 
 $(document).ready(function() {
   // Load halaman default (Penjualan)
   $("#isi").load("./penjualan.php");

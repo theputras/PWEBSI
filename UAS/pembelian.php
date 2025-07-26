@@ -28,9 +28,9 @@
                 <div class="row g-2 align-items-end mb-3">
                     <div class="col-md-3">
                         <label for="kode_item_pembelian" class="form-label">Kode Item</label>
-                        <select class="form-select" id="kode_item_pembelian">
-                            <option value="">Pilih Barang</option>
-                            </select>
+                        <input class="form-control" list="item_options_pembelian" id="kode_item_pembelian" placeholder="Ketik Kode/Nama Item">
+                        <datalist id="item_options_pembelian">
+                          </datalist>
                     </div>
                     <div class="col-md-3">
                         <label for="nama_item_pembelian" class="form-label">Nama Item</label>
@@ -85,11 +85,17 @@
 
     <hr class="my-4">
 
-    <h4 class="mb-3">Daftar Pembelian</h4>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">Daftar Pembelian</h4>
+        <button class="btn btn-danger btn-sm" id="btnHapusTerpilihPembelian">
+            <i class="bi bi-trash"></i> Hapus Terpilih
+        </button>
+    </div>
+
     <table class="table table-bordered table-striped mt-3" id="tabelDaftarPembelian">
         <thead class="table-dark">
             <tr>
-                <th>ID Pembelian</th>
+                <th><input type="checkbox" id="selectAllPembelian"></th> <th>ID Pembelian</th>
                 <th>Kode Supplier</th>
                 <th>Nama Supplier</th>
                 <th>Tanggal Pembelian</th>
@@ -161,6 +167,7 @@
 // showToast() dan daftarItem[] sudah dideklarasikan di index.php
 
 let daftarPembelianItem = []; // Array untuk menampung item yang akan dibeli dalam satu transaksi
+let allItemsDataPembelian = []; // Variabel untuk menyimpan semua data item yang dimuat
 
 // Fungsi untuk merender tabel item pembelian di form transaksi
 function updateTabelPembelianItems() {
@@ -202,7 +209,7 @@ function renderDaftarPembelianTable(data) {
         data.forEach((row) => {
             tbody.append(`
                 <tr>
-                    <td>${row.id_pembelian}</td>
+                    <td><input type="checkbox" class="check-pembelian" value="${row.id_pembelian}"></td> <td>${row.id_pembelian}</td>
                     <td>${row.kode_supplier}</td>
                     <td>${row.nama_supplier}</td>
                     <td>${row.tanggal_pembelian}</td>
@@ -227,8 +234,9 @@ function renderDaftarPembelianTable(data) {
             `);
         });
     } else {
-        tbody.append(`<tr><td colspan="7" class="text-center">Tidak ada data pembelian.</td></tr>`);
+        tbody.append(`<tr><td colspan="8" class="text-center">Tidak ada data pembelian.</td></tr>`); // Kolom colspan disesuaikan
     }
+    $('#selectAllPembelian').prop('checked', false); // Pastikan checkbox select all tidak tercentang
 }
 
 // Fungsi untuk memuat data daftar pembelian dengan caching
@@ -312,22 +320,27 @@ $(document).ready(function () {
         }
     });
 
-    // Muat dropdown item
-    $.get("./controller.php?action=getItemsOptions", function(resRaw) {
+    // Muat data item ke datalist pembelian
+    $.get('./controller.php?action=getItemsOptions', function (resRaw) {
         const res = typeof resRaw === "string" ? JSON.parse(resRaw) : resRaw;
-        if (res.status === "success") {
-            let htmlOptions = "<option value=''>Pilih Barang</option>";
-            htmlOptions += res.options;
-            $("#kode_item_pembelian").html(htmlOptions);
+
+        if (res.status === 'success') {
+            allItemsDataPembelian = res.full_data || []; // Simpan data lengkapnya
+            let datalistHtml = '';
+            allItemsDataPembelian.forEach(item => {
+                // value dari option adalah kode_item, label adalah apa yang terlihat
+                datalistHtml += `<option value="${item.kode_item}" label="${item.nama} (Stok: ${item.jumlah_item}, Harga: Rp. ${parseFloat(item.harga).toLocaleString("id-ID")})"></option>`;
+            });
+            $('#item_options_pembelian').html(datalistHtml);
         } else {
-            showToast("Gagal memuat daftar item.", "danger");
+            showToast("Gagal memuat daftar item untuk datalist.", "danger");
         }
     });
 
-    // Ketika Kode Item diubah (dropdown)
+    // Ketika Kode Item diubah (input datalist)
     $("#kode_item_pembelian").on("change", function() {
         const kode = $(this).val();
-        if (!kode) {
+        if (!kode) { // Jika input kosong
             $("#nama_item_pembelian").val("");
             $("#harga_beli_item_pembelian").val(0);
             $("#qty_item_pembelian").val(0);
@@ -335,24 +348,23 @@ $(document).ready(function () {
             return;
         }
 
-        $.get("./controller.php?action=getItemByKode&kode_item=" + kode, function(resRaw) {
-            const res = typeof resRaw === "string" ? JSON.parse(resRaw) : resRaw;
-            if (res.status === "success") {
-                const data = res.data;
-                const hargaBeli = parseFloat(data.harga_beli);
+        // Cari item di allItemsDataPembelian (yang sudah dimuat)
+        const selectedItem = allItemsDataPembelian.find(item => item.kode_item === kode);
 
-                $("#nama_item_pembelian").val(data.nama);
-                $("#harga_beli_item_pembelian").val(hargaBeli); // Isi harga_beli dari database
-                $("#qty_item_pembelian").val(1); // Default qty 1
-                $("#subtotal_item_pembelian").val((hargaBeli * 1).toLocaleString("id-ID"));
-            } else {
-                showToast("Item tidak ditemukan.", "danger");
-                $("#nama_item_pembelian").val("");
-                $("#harga_beli_item_pembelian").val(0);
-                $("#qty_item_pembelian").val(0);
-                $("#subtotal_item_pembelian").val("Rp 0");
-            }
-        });
+        if (selectedItem) {
+            const hargaBeli = parseFloat(selectedItem.harga_beli); // Ambil harga_beli dari data
+            $("#nama_item_pembelian").val(selectedItem.nama);
+            $("#harga_beli_item_pembelian").val(hargaBeli); // Isi harga_beli
+            $("#qty_item_pembelian").val(1); // Default qty 1
+            $("#subtotal_item_pembelian").val((hargaBeli * 1).toLocaleString("id-ID"));
+        } else {
+            // Jika kode tidak ditemukan di data lokal (misal user mengetik kode yang salah)
+            showToast("Kode item tidak valid atau tidak ditemukan.", "warning");
+            $("#nama_item_pembelian").val("");
+            $("#harga_beli_item_pembelian").val(0);
+            $("#qty_item_pembelian").val(0);
+            $("#subtotal_item_pembelian").val("Rp 0");
+        }
     });
 
     // Perhitungan subtotal saat Qty atau Harga Beli berubah
@@ -423,7 +435,7 @@ $(document).ready(function () {
             kode_supplier: kode_supplier,
             items_pembelian: itemsToSubmit // Kirim array item pembelian
         }, function(resRaw) {
-            const res = typeof resRaw === "string" ? JSON.parse(resRaw) : resRaw;
+            const res = typeof resRaw === "string" ? JSON.parse(res) : resRaw;
             showToast(res.message, res.status === "success" ? "success" : "danger");
 
             if (res.status === "success") {
@@ -471,7 +483,7 @@ $(document).ready(function () {
 
         // Ambil detail item pembelian
         $.get(`./controller.php?action=getDetailPembelian&id_pembelian=${idPembelian}`, function(resRaw) {
-            const res = typeof resRaw === "string" ? JSON.parse(resRaw) : resRaw;
+            const res = typeof resRaw === "string" ? JSON.parse(res) : resRaw;
             if (res.status === "success") {
                 let detailHtml = '';
                 let modalTotalQty = 0;
@@ -508,7 +520,7 @@ $(document).ready(function () {
         const idPembelian = $(this).data('id_pembelian');
         if (confirm(`Yakin ingin menghapus transaksi pembelian ID ${idPembelian} ini? Stok item akan dikembalikan.`)) {
             $.post("./controller.php", { action: "deletePembelian", id_pembelian: idPembelian }, function(resRaw) {
-                const res = typeof resRaw === "string" ? JSON.parse(resRaw) : resRaw;
+                const res = typeof resRaw === "string" ? JSON.parse(res) : resRaw;
                 showToast(res.message, res.status === "success" ? "success" : "danger");
                 if (res.status === "success") {
                     const detailModal = bootstrap.Modal.getInstance(document.getElementById('detailPembelianModal'));
@@ -526,7 +538,7 @@ $(document).ready(function () {
         const idPembelian = $(this).data('id_pembelian');
         if (confirm(`Yakin ingin menghapus transaksi pembelian ID ${idPembelian} ini? Stok item akan dikembalikan.`)) {
             $.post("./controller.php", { action: "deletePembelian", id_pembelian: idPembelian }, function(resRaw) {
-                const res = typeof resRaw === "string" ? JSON.parse(resRaw) : resRaw;
+                const res = typeof resRaw === "string" ? JSON.parse(res) : resRaw;
                 showToast(res.message, res.status === "success" ? "success" : "danger");
                 if (res.status === "success") {
                     loadDaftarPembelian(); // Muat ulang daftar pembelian setelah hapus
@@ -535,6 +547,35 @@ $(document).ready(function () {
                 showToast("⚠️ Gagal terhubung ke server untuk menghapus pembelian.", "danger");
             });
         }
+    });
+
+    // Checkbox Select All untuk Pembelian
+    $(document).on('change', '#selectAllPembelian', function () {
+      $('.check-pembelian').prop('checked', this.checked);
+    });
+
+    // Tombol Hapus Terpilih untuk Pembelian
+    $('#btnHapusTerpilihPembelian').on('click', function () {
+      const idsDipilih = $(".check-pembelian:checked").map(function () {
+        return this.value;
+      }).get();
+
+      if (idsDipilih.length === 0) {
+        showToast("⚠️ Pilih minimal satu transaksi pembelian untuk dihapus.", "warning");
+        return;
+      }
+
+      if (confirm(`Yakin ingin menghapus ${idsDipilih.length} transaksi pembelian terpilih ini? Stok item akan dikembalikan.`)) {
+        $.post("./controller.php", { action: "deleteMultiplePembelian", ids_list: idsDipilih }, function (res) {
+          const response = typeof res === "string" ? JSON.parse(res) : res;
+          showToast(response.message, response.status === "success" ? "success" : "danger");
+          if (response.status === "success") {
+            loadDaftarPembelian(); // Muat ulang data setelah sukses hapus
+          }
+        }).fail(function() {
+            showToast("⚠️ Gagal terhubung ke server untuk menghapus transaksi terpilih.", "danger");
+        });
+      }
     });
 
 });

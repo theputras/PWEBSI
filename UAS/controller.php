@@ -17,6 +17,7 @@ function getAllItems() {
 
 
 // Fungsi insert item
+// Fungsi insert item
 function insertItem() {
     global $conn;
 
@@ -47,7 +48,7 @@ function insertItem() {
     $kode_item = $_POST['kode_item'] ?? '';
     if ($kode_item === '') {
         do {
-            $kode_item = 'item' . random_int(100000, 999999);
+            $kode_item = 'ITEM' . random_int(100000, 999999);
             $cek = $conn->prepare("SELECT kode_item FROM item WHERE kode_item = ?");
             $cek->bind_param("s", $kode_item);
             $cek->execute();
@@ -69,8 +70,9 @@ function insertItem() {
     }
 
     // Sesuaikan query INSERT dan bind_param untuk harga_beli
+    // PERBAIKAN: Ubah "ssddii" menjadi "sssddi"
     $stmt = $conn->prepare("INSERT INTO item (kode_item, nama, satuan, harga, harga_beli, jumlah_item) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssddii", $kode_item, $nama, $satuan, $harga, $harga_beli, $jumlah_item);
+    $stmt->bind_param("sssddi", $kode_item, $nama, $satuan, $harga, $harga_beli, $jumlah_item);
 
     if ($stmt->execute()) {
         echo json_encode([
@@ -388,13 +390,24 @@ function getPenjualan() {
 
 function getItemOptions() {
     global $conn;
-    $result = $conn->query("SELECT kode_item, nama, jumlah_item, harga FROM item ORDER BY nama ASC"); // Ambil harga_jual (harga) juga
+    // PERBAIKAN: Ambil juga kolom 'satuan'
+    $result = $conn->query("SELECT kode_item, nama, jumlah_item, harga, satuan FROM item ORDER BY nama ASC");
     $options = "";
+    $full_data = []; // Untuk menyimpan data lengkap setiap item
     while ($row = $result->fetch_assoc()) {
-        // Tampilkan stok di opsi
-        $options .= "<option value='{$row['kode_item']}'>{$row['nama']} (Stok: {$row['jumlah_item']}, Harga: Rp. {$row['harga']}) - {$row['kode_item']}</option>";
+        // PERBAIKAN: Ganti value dengan kode_item, label dengan format yang diinginkan
+        $options .= "<option value='{$row['kode_item']}' label='{$row['nama']} (Stok: {$row['jumlah_item']}, Harga: Rp. {$row['harga']})'></option>";
+        
+        // Simpan data lengkap untuk penggunaan filter sisi klien (jika Select2 tidak digunakan dengan AJAX)
+        $full_data[] = [
+            'kode_item' => $row['kode_item'],
+            'nama' => $row['nama'],
+            'jumlah_item' => $row['jumlah_item'],
+            'harga' => $row['harga'],
+            'satuan' => $row['satuan'] // Pastikan satuan juga diambil
+        ];
     }
-    echo json_encode(["status" => "success", "options" => $options]);
+    echo json_encode(["status" => "success", "options" => $options, "full_data" => $full_data]); // Kirim juga full_data
 }
 
 
@@ -554,16 +567,14 @@ function getPembelian() {
     $sql = "SELECT p.*, s.nama_supplier FROM pembelian p JOIN supplier s ON p.kode_supplier = s.kode_supplier ORDER BY p.tanggal_pembelian DESC";
     $result = $conn->query($sql);
 
+    $pembelian = []; // Inisialisasi array kosong
     if ($result->num_rows > 0) {
-        $pembelian = [];
         while ($row = $result->fetch_assoc()) {
             $pembelian[] = $row;
         }
-
-        echo json_encode(["status" => "success", "data" => $pembelian]);
-    } else {
-        echo json_encode(["status" => "error", "message" => "Data pembelian tidak ditemukan."]);
     }
+    // PERBAIKAN: Selalu kembalikan status success dengan data (bisa kosong)
+    echo json_encode(["status" => "success", "data" => $pembelian]);
 }
 
 
@@ -816,11 +827,70 @@ function deleteSupplier() {
     }
 }
 
+
+// Tambahkan fungsi deleteMultiplePembelian
+function deleteMultiplePembelian() {
+    global $conn;
+
+    $idsList = $_POST['ids_list'] ?? [];
+
+    if (!is_array($idsList) || count($idsList) === 0) {
+        echo json_encode(["status" => "error", "message" => "⚠️ Tidak ada transaksi pembelian terpilih."]);
+        return;
+    }
+
+    $conn->begin_transaction(); // Mulai transaksi
+
+    try {
+        foreach ($idsList as $id_pembelian) {
+            // 1. Ambil detail pembelian untuk mengembalikan stok
+            $detail_stmt = $conn->prepare("SELECT kode_item, jumlah FROM detailpembelian WHERE id_pembelian = ?");
+            $detail_stmt->bind_param("i", $id_pembelian);
+            $detail_stmt->execute();
+            $detail_result = $detail_stmt->get_result();
+
+            $update_stok_stmt = $conn->prepare("UPDATE item SET jumlah_item = jumlah_item - ? WHERE kode_item = ?");
+
+            while ($row = $detail_result->fetch_assoc()) {
+                $kode_item = $row['kode_item'];
+                $jumlah = $row['jumlah'];
+                $update_stok_stmt->bind_param("is", $jumlah, $kode_item);
+                $update_stok_stmt->execute();
+            }
+            $detail_stmt->close(); // Tutup statement setelah selesai
+
+            // 2. Hapus detail pembelian terkait
+            $delete_detail_stmt = $conn->prepare("DELETE FROM detailpembelian WHERE id_pembelian = ?");
+            $delete_detail_stmt->bind_param("i", $id_pembelian);
+            $delete_detail_stmt->execute();
+            $delete_detail_stmt->close(); // Tutup statement setelah selesai
+
+            // 3. Hapus pembayaran terkait (jika ada)
+            $delete_pembayaran_stmt = $conn->prepare("DELETE FROM pembayaran WHERE id_pembelian = ?");
+            $delete_pembayaran_stmt->bind_param("i", $id_pembelian);
+            $delete_pembayaran_stmt->execute();
+            $delete_pembayaran_stmt->close(); // Tutup statement setelah selesai
+
+            // 4. Hapus pembelian dari tabel master
+            $stmt = $conn->prepare("DELETE FROM pembelian WHERE id_pembelian = ?");
+            $stmt->bind_param("i", $id_pembelian);
+            $stmt->execute();
+            $stmt->close(); // Tutup statement setelah selesai
+        }
+
+        $conn->commit(); // Commit transaksi jika semua berhasil
+        echo json_encode(["status" => "success", "message" => "✅ Berhasil menghapus beberapa transaksi pembelian dan stok dikembalikan."]);
+    } catch (Exception $e) {
+        $conn->rollback(); // Rollback transaksi jika ada kesalahan
+        echo json_encode(["status" => "error", "message" => "❌ Gagal menghapus transaksi pembelian: " . $e->getMessage()]);
+    }
+}
+
 // Routing
 
 if ($_SERVER["REQUEST_METHOD"] === "GET") {
 if (isset($_GET['action'])) {
-     if ($_GET['action'] === "getItemsOptions") {
+     if ($_GET['action'] === "getItemOptions") {
             getItemOptions(); exit;
         }  elseif ($_GET['action'] === "getAllItems") {
             getAllItems(); exit;

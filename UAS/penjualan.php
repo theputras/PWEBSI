@@ -23,11 +23,12 @@
         </div>
 
         <div class="row g-2 align-items-end">
-          <div class="col-md-2">
-            <label>Kode</label>
-            <select class="form-select" id="kode_item">
-              <option value="">Pilih Barang</option>
-            </select>
+          <div class="col-md-3 position-relative"> <label>Kode/Nama Item</label>
+            <input type="text" class="form-control" id="kode_item_search" placeholder="Cari atau Pilih Barang">
+            <input type="hidden" id="kode_item_selected" name="kode_item_selected"> 
+
+            <div id="item_suggestions" class="list-group position-absolute w-100 bg-white border border-secondary rounded shadow-lg" style="z-index:1000; max-height:200px; overflow-y:auto; display:none;">
+              </div>
           </div>
           <div class="col-md-2">
             <label>Nama</label>
@@ -49,8 +50,8 @@
             <label>Subtotal</label>
             <input type="text" id="subtotal_item" class="form-control" readonly>
           </div>
-          <div class="col-md-2">
-            <button type="button" class="btn btn-primary w-100" id="btnTambahItem">Tambah</button>
+          <div class="col-md-1">
+            <button type="button" class="btn btn-primary w-100" id="btnTambahItem"><i class="bi bi-plus-square"></i></button>
           </div>
         </div>
 
@@ -299,51 +300,103 @@ function updateTabel() {
   $("#totalHarga").text("Rp " + totalHarga.toLocaleString("id-ID"));
 }
 
+// Variabel untuk menyimpan semua data item yang dimuat dari server
+
 
 $(document).ready(function () {
 loadPenjualan(); // ambil data saat pertama buka halaman
 
-  // Ambil data item ke dropdown
-  const $dropdown = $('#kode_item');
-
-  if ($dropdown.length > 0) {
-    $.get('./controller.php?action=getItemsOptions', function (resRaw) {
-      const res = typeof resRaw === "string" ? JSON.parse(resRaw) : resRaw;
-
-      if (res.status === 'success') {
-        let html = '<option value="">Pilih Barang</option>';
-        html += res.options; // pastiin ini udah <option ...>
-        $dropdown.html(html);
-      } else {
-        $dropdown.html('<option value="">Gagal memuat data</option>');
-      }
-    });
-  } else {
-    console.warn('#kode_item not found di DOM!');
-  }
-
-  // Saat kode_item dipilih, isi nama + satuan + harga
-$("#kode_item").on("change", function () {
-  const kode = $(this).val();
-  if (!kode) return;
-
-  $.get("./controller.php?action=getItemByKode&kode_item=" + kode, function (resRaw) {
+  // Ambil data item ke allItemsData dan inisialisasi saran
+  $.get('./controller.php?action=getItemOptions', function (resRaw) {
     const res = typeof resRaw === "string" ? JSON.parse(resRaw) : resRaw;
-    if (res.status === "success") {
-  const data = res.data;
-  const harga = parseFloat(data.harga);
 
-  $("#nama_item").val(data.nama);
-  $("#satuan_item").val(data.satuan);
-
-  // Simpan angka asli di .data("raw")
-  $("#harga_item").val(harga.toLocaleString("id-ID")).data("raw", harga);
-  $("#qty_item").val(1);
-  $("#subtotal_item").val(harga.toLocaleString("id-ID"));
-}
-
+    if (res.status === 'success' && res.full_data) {
+        allItemsData = res.full_data;
+        // Inisialisasi saran awal (opsional, bisa kosong)
+        // renderItemSuggestions(allItemsData); 
+    } else {
+        showToast("Gagal memuat daftar item untuk pencarian.", "danger");
+    }
   });
-});
+
+
+    // Fungsi untuk merender saran item
+    function renderItemSuggestions(filteredItems) {
+        const suggestionsDiv = $('#item_suggestions');
+        suggestionsDiv.empty();
+        if (filteredItems.length > 0) {
+            filteredItems.forEach(item => {
+                const suggestionText = `${item.nama} (Stok: ${item.jumlah_item}, Harga: Rp. ${parseFloat(item.harga).toLocaleString("id-ID")}) - ${item.kode_item}`;
+                suggestionsDiv.append(`
+                    <a href="#" class="list-group-item list-group-item-action" 
+                       data-kode_item="${item.kode_item}"
+                       data-nama="${item.nama}"
+                       data-satuan="${item.satuan}"
+                       data-harga="${item.harga}"
+                       data-jumlah_item="${item.jumlah_item}">
+                       ${suggestionText}
+                    </a>
+                `);
+            });
+            suggestionsDiv.show();
+        } else {
+            suggestionsDiv.hide();
+        }
+    }
+
+    // Event listener untuk input pencarian
+    $('#kode_item_search').on('input', function() {
+        const searchTerm = $(this).val().toLowerCase();
+        if (searchTerm.length === 0) {
+            $('#item_suggestions').hide().empty();
+            // Kosongkan juga field detail jika pencarian dikosongkan
+            $("#kode_item_selected").val("");
+            $("#nama_item").val("");
+            $("#satuan_item").val("");
+            $("#harga_item").val("").removeData("raw");
+            $("#qty_item").val(0);
+            $("#subtotal_item").val("Rp 0");
+            return;
+        }
+
+        const filtered = allItemsData.filter(item => 
+            item.nama.toLowerCase().includes(searchTerm) || 
+            item.kode_item.toLowerCase().includes(searchTerm) ||
+            item.satuan.toLowerCase().includes(searchTerm) // Pencarian per kalimat
+        );
+        renderItemSuggestions(filtered);
+    });
+
+    // Event listener saat saran item diklik
+    $(document).on('click', '#item_suggestions .list-group-item', function(e) {
+        e.preventDefault();
+        const selectedItemKode = $(this).data('kode_item');
+        const selectedItemNama = $(this).data('nama');
+        const selectedItemSatuan = $(this).data('satuan');
+        const selectedItemHarga = $(this).data('harga');
+        const selectedItemJumlah = $(this).data('jumlah_item'); // Stok yang tersedia
+
+        // Isi input pencarian dan hidden input
+        $('#kode_item_search').val(`${selectedItemNama} - ${selectedItemKode}`);
+        $('#kode_item_selected').val(selectedItemKode);
+
+        // Isi detail item lainnya
+        $("#nama_item").val(selectedItemNama);
+        $("#satuan_item").val(selectedItemSatuan);
+        $("#harga_item").val(parseFloat(selectedItemHarga).toLocaleString("id-ID")).data("raw", parseFloat(selectedItemHarga));
+        $("#qty_item").val(1); // Default Qty 1
+        $("#subtotal_item").val(parseFloat(selectedItemHarga).toLocaleString("id-ID"));
+        
+        $('#item_suggestions').hide(); // Sembunyikan saran
+        $("#qty_item").focus(); // Fokus ke Qty
+    });
+
+    // Sembunyikan saran jika klik di luar
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('#kode_item_search, #item_suggestions').length) {
+            $('#item_suggestions').hide();
+        }
+    });
 
 
 $("#qty_item").on("input", function () {
@@ -356,7 +409,7 @@ $("#qty_item").on("input", function () {
 
 
 $("#btnTambahItem").on("click", function () {
-  const kode = $("#kode_item").val();
+  const kode = $("#kode_item_selected").val(); // Ambil dari hidden input
   const nama = $("#nama_item").val();
   const satuan = $("#satuan_item").val();
 
@@ -366,13 +419,28 @@ $("#btnTambahItem").on("click", function () {
   const subtotal = harga * qty;
 
   if (!kode || qty < 1 || isNaN(harga)) { // Tambahkan validasi harga
-    showToast("Pilih item, masukkan qty valid, dan pastikan harga ada!");
+    showToast("Pilih item, masukkan qty valid, dan pastikan harga ada!", "danger");
     return;
   }
+  // Cek stok (opsional tapi sangat disarankan)
+    const selectedItemData = allItemsData.find(item => item.kode_item === kode);
+    if (selectedItemData && qty > selectedItemData.jumlah_item) {
+        showToast(`Stok ${nama} (${selectedItemData.satuan}) tidak cukup. Tersedia: ${selectedItemData.jumlah_item}`, "danger");
+        return;
+    }
 
 
   daftarItem.push({ kode, nama, satuan, harga, qty, subtotal });
   updateTabel();
+  
+  // Bersihkan form item setelah ditambahkan
+  $('#kode_item_search').val("");
+  $('#kode_item_selected').val("");
+  $("#nama_item").val("");
+  $("#satuan_item").val("");
+  $("#harga_item").val("").removeData("raw");
+  $("#qty_item").val(0);
+  $("#subtotal_item").val("Rp 0");
 });
 
 
@@ -388,7 +456,7 @@ $("#formTransaksi").on("submit", function (e) {
   e.preventDefault();
 
   const konsumen = $(this).find('[name="konsumen"]').val();
-  if (daftarItem.length === 0) return showToast("Isi minimal satu barang!");
+  if (daftarItem.length === 0) return showToast("Isi minimal satu barang!", "danger");
 
   // Susun ulang daftarItem biar sesuai struktur server
   const items = daftarItem.map(item => ({
@@ -416,7 +484,7 @@ $("#formTransaksi").on("submit", function (e) {
       const formCollapse = new bootstrap.Collapse(document.getElementById('formTransaksiCollapse'));
       formCollapse.hide();
     } else {
-      showToast(res.message);
+      showToast(res.message, "danger");
     }
   });
 });
@@ -467,7 +535,7 @@ $(document).on("click", ".btnDetail", function () {
       detailModal.show();
 
     } else {
-      showToast(res.message);
+      showToast(res.message, "danger");
     }
   });
 });
@@ -475,7 +543,7 @@ $(document).on("click", ".btnDetail", function () {
 $('#btnPrintDetail').on('click', function() {
     const printContents = document.getElementById('modalPrintArea').innerHTML;
     const originalContents = document.body.innerHTML;
-    const originalHeadContents = document.head.innerHTML; // Simpan isi head asli
+    // const originalHeadContents = document.head.innerHTML; // Tidak diperlukan lagi
 
     // Gaya untuk cetak
     const printStyles = `
