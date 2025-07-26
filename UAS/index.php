@@ -50,7 +50,7 @@ $icon = $db_connected ? '✅' : '❌';
 
 <div class="container mt-3">
   <div class="alert <?= $alert_class ?> text-center" role="alert">
-    <?= $icon ?> **Status Koneksi Database:** <?= $db_message ?>
+     Status Koneksi Database <?=  $icon ?>: <?= $db_message ?> 
   </div>
 
   <div id="isi" class="p-4 border rounded bg-light shadow-sm">

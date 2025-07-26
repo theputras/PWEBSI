@@ -89,6 +89,7 @@
 </div>
 
 <hr>
+<div class="container">
 <h4 class="mb-3">Tabel Transaksi</h4>
   <table class="table table-bordered mt-3" id="tabelPenjualan">
       <thead class="table-dark">
@@ -104,7 +105,7 @@
       <tbody></tbody>
 
     </table>
-
+</div>
 
 <div class="modal fade" id="detailTransaksiModal" tabindex="-1" aria-labelledby="detailTransaksiModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
@@ -141,7 +142,8 @@
         </table>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-info" id="btnPrintDetail">Print</button> <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+        <button type="button" class="btn btn-primary" id="btnPrintDetail"><i class="bi bi-printer"></i> Print</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
       </div>
     </div>
   </div>
@@ -203,8 +205,8 @@ function renderPenjualanTable(data) {
 
 
 function loadPenjualan() {
-    const cacheKey = 'penjualanData';
-    const cachedData = localStorage.getItem(cacheKey);
+  const cacheKey = 'penjualanData';
+  const cachedData = localStorage.getItem(cacheKey);
     const cacheExpiryTime = 5 * 60 * 1000; // 5 menit
 
     // 1. Coba muat dari cache dulu (untuk "sat set")
@@ -305,6 +307,7 @@ function updateTabel() {
 
 $(document).ready(function () {
 loadPenjualan(); // ambil data saat pertama buka halaman
+  const cacheKey = 'penjualanData';
 
   // Ambil data item ke allItemsData dan inisialisasi saran
   $.get('./controller.php?action=getItemOptions', function (resRaw) {
@@ -439,7 +442,7 @@ $("#btnTambahItem").on("click", function () {
   $("#nama_item").val("");
   $("#satuan_item").val("");
   $("#harga_item").val("").removeData("raw");
-  $("#qty_item").val(0);
+  $("#qty_item").val("");
   $("#subtotal_item").val("Rp 0");
 });
 
@@ -475,6 +478,7 @@ $("#formTransaksi").on("submit", function (e) {
     const res = typeof resRaw === "string" ? JSON.parse(resRaw) : resRaw;
 
     if (res.status === "success") {
+    localStorage.removeItem(cacheKey);
       showToast(res.message, 'success'); // Tambahkan type success
       daftarItem = [];
       updateTabel();

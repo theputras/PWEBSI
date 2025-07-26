@@ -20,7 +20,7 @@ if ($conn->connect_error) {
     // Jangan die() di sini, agar halaman utama tetap bisa dimuat
 } else {
     $db_connected = true;
-    $db_message = "Koneksi berhasil ke database '$dbname' pada host '$host'";
+    $db_message = "Koneksi berhasil ke database '$dbname'";
 }
 
 function getConnection() {

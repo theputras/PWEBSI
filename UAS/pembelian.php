@@ -22,15 +22,27 @@
                             <option value="">Pilih Supplier</option>
                             </select>
                     </div>
+                    
+                    <div class="col-md-3">
+    <label for="status_pembelian" class="form-label">Status</label>
+    <select class="form-select" id="status_pembelian" name="status_pembelian" required>
+        <option value="pending" selected>Pending</option>
+        <option value="lunas">Lunas</option>
+        <option value="batal">Batal</option>
+    </select>
+</div>
+
                 </div>
 
                 <h6 class="mt-4">Tambah Item Pembelian:</h6>
                 <div class="row g-2 align-items-end mb-3">
-                    <div class="col-md-3">
-                        <label for="kode_item_pembelian" class="form-label">Kode Item</label>
-                        <input class="form-control" list="item_options_pembelian" id="kode_item_pembelian" placeholder="Ketik Kode/Nama Item">
-                        <datalist id="item_options_pembelian">
-                          </datalist>
+                    <div class="col-md-3 position-relative">
+                        <label for="kode_item_search" class="form-label">Kode/Nama Item</label>
+                        <input type="text" class="form-control" id="kode_item_search" placeholder="Cari atau Pilih Barang">
+                        <input type="hidden" id="kode_item_selected" name="kode_item_selected"> 
+
+                        <div id="item_suggestions" class="list-group position-absolute w-100 bg-white border border-secondary rounded shadow-lg" style="z-index:1000; max-height:200px; overflow-y:auto; display:none;">
+                        </div>
                     </div>
                     <div class="col-md-3">
                         <label for="nama_item_pembelian" class="form-label">Nama Item</label>
@@ -120,7 +132,7 @@
         <p><strong>ID Pembelian:</strong> <span id="modalIdPembelian"></span></p>
         <p><strong>Tanggal:</strong> <span id="modalTanggalPembelian"></span></p>
         <p><strong>Supplier:</strong> <span id="modalNamaSupplier"></span> (<span id="modalKodeSupplier"></span>)</p>
-        <p><strong>Status:</strong> <span id="modalStatusPembelian"></span></p>
+        <!-- <p><strong>Status:</strong> <span id="modalStatusPembelian"></span></p> -->
 
         <h6>Detail Item:</h6>
         <table class="table table-bordered table-striped">
@@ -145,6 +157,7 @@
         </table>
       </div>
       <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="btnPrintDetail"><i class="bi bi-printer"></i> Print</button>
         <button type="button" class="btn btn-danger" id="btnHapusPembelianModal">Hapus Transaksi Ini</button>
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
       </div>
@@ -165,10 +178,20 @@
 
 <script>
 // showToast() dan daftarItem[] sudah dideklarasikan di index.php
+// daftarPembelianItem[] dan allItemsDataPembelian[] sudah dideklarasikan di index.php
 
-// let daftarPembelianItem = []; // Array untuk menampung item yang akan dibeli dalam satu transaksi
+// Muat dropdown supplier
+$.get("./controller.php?action=getSupplierOptions", function(resRaw) {
+    const res = typeof resRaw === "string" ? JSON.parse(resRaw) : resRaw;
+    if (res.status === "success") {
+        let htmlOptions = "<option value=''>Pilih Supplier</option>";
+        htmlOptions += res.options;
+        $("#kode_supplier_pembelian").html(htmlOptions);
+    } else {
+        showToast("Gagal memuat daftar supplier.", "danger");
+    }
+});
 
-// let allItemsData = []; 
 // Fungsi untuk merender tabel item pembelian di form transaksi
 function updateTabelPembelianItems() {
     const tbody = $("#daftarItemPembelian");
@@ -264,8 +287,12 @@ function loadDaftarPembelian() {
 
     // 2. Selalu ambil data terbaru dari server di latar belakang
     $.get("./controller.php?action=getPembelian", function (resRaw) {
-        const res = typeof resRaw === "string" ? JSON.parse(resRaw) : resRaw;
-
+  let res;
+    try {
+        res = typeof resRaw === "string" ? JSON.parse(resRaw) : resRaw;
+    } catch (e) {
+        res = {};
+    }
         if (res.status === "success") {
             const currentServerData = JSON.stringify(res.data);
             let isDataChanged = true;
@@ -297,7 +324,7 @@ function loadDaftarPembelian() {
             }
         }
     }).fail(function() {
-        showToast("⚠️ Gagal terhubung ke server untuk data pembelian.");
+        showToast("⚠️ Gagal terhubung ke server untuk data pembelian.", "danger");
         if (!cachedData) {
             renderDaftarPembelianTable([]);
         }
@@ -307,29 +334,19 @@ function loadDaftarPembelian() {
 
 $(document).ready(function () {
     loadDaftarPembelian(); // Muat data pembelian saat halaman dimuat
+const cacheKey = 'pembelianData';
 
-    // Muat dropdown supplier
-    $.get("./controller.php?action=getSupplierOptions", function(resRaw) {
-        const res = typeof resRaw === "string" ? JSON.parse(resRaw) : resRaw;
-        if (res.status === "success") {
-            let htmlOptions = "<option value=''>Pilih Supplier</option>";
-            htmlOptions += res.options;
-            $("#kode_supplier_pembelian").html(htmlOptions);
-        } else {
-            showToast("Gagal memuat daftar supplier.", "danger");
-        }
-    });
 
     // Muat data item ke datalist pembelian
-    $.get('./controller.php?action=getItemsOptions', function (resRaw) {
+    $.get('./controller.php?action=getItemOptions', function (resRaw) {
         const res = typeof resRaw === "string" ? JSON.parse(resRaw) : resRaw;
 
         if (res.status === 'success') {
-            allItemsData = res.full_data || []; // Simpan data lengkapnya
+            allItemsDataPembelian = res.full_data || []; // Simpan data lengkapnya
             let datalistHtml = '';
-            allItemsData.forEach(item => {
+            allItemsDataPembelian.forEach(item => {
                 // value dari option adalah kode_item, label adalah apa yang terlihat
-                datalistHtml += `<option value="${item.kode_item}" label="${item.nama} (Stok: ${item.jumlah_item}, Harga: Rp. ${parseFloat(item.harga).toLocaleString("id-ID")})"></option>`;
+                datalistHtml += `<option value="${item.kode_item}" label="${item.nama} (Stok: ${item.jumlah_item}, Harga Jual: Rp. ${parseFloat(item.harga).toLocaleString("id-ID")}, Harga Beli: Rp. ${parseFloat(item.harga_beli).toLocaleString("id-ID")})"></option>`;
             });
             $('#item_options_pembelian').html(datalistHtml);
         } else {
@@ -337,10 +354,16 @@ $(document).ready(function () {
         }
     });
 
-    // Ketika Kode Item diubah (input datalist)
-    $("#kode_item_pembelian").on("change", function() {
-        const kode = $(this).val();
-        if (!kode) { // Jika input kosong
+    // Ketika input #kode_item_search berubah (custom autocomplete input)
+    $('#kode_item_search').on('input', function() {
+        const searchTerm = $(this).val().toLowerCase();
+        const suggestionsDiv = $('#item_suggestions');
+        suggestionsDiv.empty();
+
+        if (searchTerm.length === 0) {
+            suggestionsDiv.hide();
+            // Kosongkan juga field detail jika pencarian dikosongkan
+            $("#kode_item_selected").val("");
             $("#nama_item_pembelian").val("");
             $("#harga_beli_item_pembelian").val(0);
             $("#qty_item_pembelian").val(0);
@@ -348,22 +371,60 @@ $(document).ready(function () {
             return;
         }
 
-        // Cari item di allItemsData (yang sudah dimuat)
-        const selectedItem = allItemsData.find(item => item.kode_item === kode);
+        const filtered = allItemsDataPembelian.filter(item => 
+            item.nama.toLowerCase().includes(searchTerm) || 
+            item.kode_item.toLowerCase().includes(searchTerm)
+        );
 
-        if (selectedItem) {
-            const hargaBeli = parseFloat(selectedItem.harga_beli); // Ambil harga_beli dari data
-            $("#nama_item_pembelian").val(selectedItem.nama);
-            $("#harga_beli_item_pembelian").val(hargaBeli); // Isi harga_beli
-            $("#qty_item_pembelian").val(1); // Default qty 1
-            $("#subtotal_item_pembelian").val((hargaBeli * 1).toLocaleString("id-ID"));
+        if (filtered.length > 0) {
+            filtered.forEach(item => {
+                const suggestionText = `${item.nama} - ${item.kode_item} (Stok: ${item.jumlah_item}, Harga Beli: Rp. ${parseFloat(item.harga_beli).toLocaleString("id-ID")})`;
+                suggestionsDiv.append(`
+                    <a href="#" class="list-group-item list-group-item-action" 
+                       data-kode_item="${item.kode_item}"
+                       data-nama="${item.nama}"
+                       data-harga_beli="${item.harga_beli}"
+                       data-jumlah_item="${item.jumlah_item}"
+                       data-satuan="${item.satuan}"> ${suggestionText}
+                    </a>
+                `);
+            });
+            suggestionsDiv.show();
         } else {
-            // Jika kode tidak ditemukan di data lokal (misal user mengetik kode yang salah)
-            showToast("Kode item tidak valid atau tidak ditemukan.", "warning");
-            $("#nama_item_pembelian").val("");
-            $("#harga_beli_item_pembelian").val(0);
-            $("#qty_item_pembelian").val(0);
-            $("#subtotal_item_pembelian").val("Rp 0");
+            suggestionsDiv.hide();
+        }
+    });
+
+    // Event listener saat saran item diklik
+    $(document).on('click', '#item_suggestions .list-group-item', function(e) {
+        e.preventDefault();
+        const selectedItemKode = $(this).data('kode_item');
+        const selectedItemNama = $(this).data('nama');
+        const selectedItemHargaBeli = $(this).data('harga_beli');
+        const selectedItemJumlah = $(this).data('jumlah_item'); // Stok yang tersedia
+        const selectedItemSatuan = $(this).data('satuan'); // Ambil satuan
+
+        // Isi input pencarian dan hidden input
+        $('#kode_item_search').val(`${selectedItemNama} - ${selectedItemKode}`);
+        $('#kode_item_selected').val(selectedItemKode);
+
+        // Isi detail item lainnya
+        $("#nama_item_pembelian").val(selectedItemNama);
+        $("#harga_beli_item_pembelian").val(parseFloat(selectedItemHargaBeli));
+        $("#qty_item_pembelian").val(1); // Default Qty 1
+        $("#subtotal_item_pembelian").val(parseFloat(selectedItemHargaBeli).toLocaleString("id-ID"));
+        
+        // Tambahkan satuan item
+        $("#satuan_item_pembelian").val(selectedItemSatuan); 
+        
+        $('#item_suggestions').hide(); // Sembunyikan saran
+        $("#qty_item_pembelian").focus(); // Fokus ke Qty
+    });
+
+    // Sembunyikan saran jika klik di luar
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('#kode_item_search, #item_suggestions').length) {
+            $('#item_suggestions').hide();
         }
     });
 
@@ -377,14 +438,15 @@ $(document).ready(function () {
 
     // Tambah Item ke daftarPembelianItem
     $("#btnTambahItemPembelian").on("click", function() {
-        const kode_item = $("#kode_item_pembelian").val();
+        const kode_item = $("#kode_item_selected").val(); // Ambil dari hidden input
         const nama = $("#nama_item_pembelian").val();
-        const harga_beli = parseFloat($("#harga_beli_item_pembelian").val());
+        const harga_beli = parseFloat($("#harga_beli_item_pembelian").data("raw") || $("#harga_beli_item_pembelian").val());
         const qty = parseInt($("#qty_item_pembelian").val());
         const subtotal = harga_beli * qty;
+        const satuan = $("#satuan_item_pembelian").val(); // Ambil satuan
 
-        if (!kode_item || !nama || isNaN(harga_beli) || qty <= 0) {
-            showToast("Lengkapi detail item pembelian (Kode, Nama, Harga Beli, Qty).", "danger");
+        if (!kode_item || !nama || isNaN(harga_beli) || qty <= 0) { // Validasi satuan
+            showToast("Lengkapi detail item pembelian (Kode, Nama, Harga Beli, Qty, Satuan).", "danger");
             return;
         }
 
@@ -394,13 +456,15 @@ $(document).ready(function () {
             daftarPembelianItem[existingItemIndex].qty += qty;
             daftarPembelianItem[existingItemIndex].subtotal += subtotal;
         } else {
-            daftarPembelianItem.push({ kode_item, nama, harga_beli, qty, subtotal });
+            daftarPembelianItem.push({ kode_item, nama, harga_beli, qty, subtotal, satuan }); // Simpan satuan
         }
         
         updateTabelPembelianItems();
-        $("#kode_item_pembelian, #nama_item_pembelian, #subtotal_item_pembelian").val("");
-        $("#harga_beli_item_pembelian, #qty_item_pembelian").val(0);
-        $("#kode_item_pembelian").focus();
+        // Reset input form item
+        $("#kode_item_search, #nama_item_pembelian, #subtotal_item_pembelian, #satuan_item_pembelian").val("");
+        $("#harga_beli_item_pembelian, #qty_item_pembelian").val("");
+        $("#kode_item_selected").val(""); // Kosongkan hidden input juga
+        $("#kode_item_search").focus();
     });
 
     // Hapus Item dari daftarPembelianItem
@@ -414,6 +478,7 @@ $(document).ready(function () {
     $('#formTransaksiPembelian').on('submit', function(e) {
         e.preventDefault();
         const kode_supplier = $("#kode_supplier_pembelian").val();
+        const status_pembelian = $("#status_pembelian").val() || "pending";
         if (!kode_supplier) {
             showToast("Pilih supplier untuk transaksi ini.", "danger");
             return;
@@ -433,12 +498,14 @@ $(document).ready(function () {
         $.post("./controller.php", {
             action: "insertPembelian",
             kode_supplier: kode_supplier,
-            items_pembelian: itemsToSubmit // Kirim array item pembelian
+            items_pembelian: itemsToSubmit,
+            status_pembelian: status_pembelian// Kirim array item pembelian // Kirim array item pembelian
         }, function(resRaw) {
-            const res = typeof resRaw === "string" ? JSON.parse(res) : resRaw;
+            const res = typeof resRaw === "string" ? JSON.parse(resRaw) : resRaw;
             showToast(res.message, res.status === "success" ? "success" : "danger");
 
             if (res.status === "success") {
+             localStorage.removeItem(cacheKey); // reset cache
                 daftarPembelianItem = []; // Reset item list
                 updateTabelPembelianItems(); // Kosongkan tabel
                 $('#formTransaksiPembelian')[0].reset(); // Reset form master
@@ -483,7 +550,7 @@ $(document).ready(function () {
 
         // Ambil detail item pembelian
         $.get(`./controller.php?action=getDetailPembelian&id_pembelian=${idPembelian}`, function(resRaw) {
-            const res = typeof resRaw === "string" ? JSON.parse(res) : resRaw;
+            const res = typeof resRaw === "string" ? JSON.parse(resRaw) : resRaw;
             if (res.status === "success") {
                 let detailHtml = '';
                 let modalTotalQty = 0;
@@ -520,9 +587,10 @@ $(document).ready(function () {
         const idPembelian = $(this).data('id_pembelian');
         if (confirm(`Yakin ingin menghapus transaksi pembelian ID ${idPembelian} ini? Stok item akan dikembalikan.`)) {
             $.post("./controller.php", { action: "deletePembelian", id_pembelian: idPembelian }, function(resRaw) {
-                const res = typeof resRaw === "string" ? JSON.parse(res) : resRaw;
+                const res = typeof resRaw === "string" ? JSON.parse(resRaw) : resRaw;
                 showToast(res.message, res.status === "success" ? "success" : "danger");
                 if (res.status === "success") {
+                 localStorage.removeItem(cacheKey); // reset cache
                     const detailModal = bootstrap.Modal.getInstance(document.getElementById('detailPembelianModal'));
                     if (detailModal) detailModal.hide();
                     loadDaftarPembelian(); // Muat ulang daftar pembelian setelah hapus
@@ -538,9 +606,10 @@ $(document).ready(function () {
         const idPembelian = $(this).data('id_pembelian');
         if (confirm(`Yakin ingin menghapus transaksi pembelian ID ${idPembelian} ini? Stok item akan dikembalikan.`)) {
             $.post("./controller.php", { action: "deletePembelian", id_pembelian: idPembelian }, function(resRaw) {
-                const res = typeof resRaw === "string" ? JSON.parse(res) : resRaw;
+                const res = typeof resRaw === "string" ? JSON.parse(resRaw) : resRaw;
                 showToast(res.message, res.status === "success" ? "success" : "danger");
                 if (res.status === "success") {
+                localStorage.removeItem(cacheKey); // reset cache
                     loadDaftarPembelian(); // Muat ulang daftar pembelian setelah hapus
                 }
             }).fail(function() {
@@ -561,7 +630,7 @@ $(document).ready(function () {
       }).get();
 
       if (idsDipilih.length === 0) {
-        showToast("⚠️ Pilih minimal satu transaksi pembelian untuk dihapus.", "warning");
+        showToast("⚠️ Pilih minimal satu transaksi pembelian untuk dihapus.");
         return;
       }
 
@@ -577,6 +646,45 @@ $(document).ready(function () {
         });
       }
     });
+
+$('#btnPrintDetail').on('click', function() {
+    const printContents = document.getElementById('modalPrintArea').innerHTML;
+    const printStyles = `
+        <style>
+            body { margin: 20mm !important; }
+            @media print {
+                body { margin: 10mm !important; }
+                .navbar, .toast, .modal-footer, .btn-close { display: none !important; }
+                table { width: 100% !important; border-collapse: collapse !important; }
+                th, td { border: 1px solid #dee2e6 !important; padding: .75rem !important; }
+                .table-dark { background-color: #343a40 !important; color: white !important; -webkit-print-color-adjust: exact; }
+            }
+        </style>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    `;
+
+    const fullPrintHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Detail Transaksi Pembelian</title>
+            ${printStyles}
+        </head>
+        <body>
+            ${printContents}
+        </body>
+        </html>
+    `;
+
+    // Buka dokumen untuk print
+    document.open();
+    document.write(fullPrintHtml);
+    document.close();
+
+    window.print();
+    location.reload();
+});
+
 
 });
 </script>

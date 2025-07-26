@@ -125,9 +125,10 @@ function renderSupplierTable(data) {
 }
 
 $(document).ready(function () {
+    const cacheKey = 'supplierData';
     // Fungsi untuk memuat ulang data supplier dengan caching
     function loadSuppliers() {
-        const cacheKey = 'supplierData';
+    const cacheKey = 'supplierData';
         const cachedData = localStorage.getItem(cacheKey);
         const cacheExpiryTime = 5 * 60 * 1000; // 5 menit
 
@@ -258,6 +259,7 @@ $(document).ready(function () {
             showToast(res.message, res.status === "success" ? "success" : "danger");
 
             if (res.status === "success") {
+            localStorage.removeItem(cacheKey);
                 loadSuppliers(); // Muat ulang data setelah sukses
                 resetForm(); // Reset dan sembunyikan form
             }

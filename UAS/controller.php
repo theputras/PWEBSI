@@ -315,11 +315,20 @@ function insertPenjualan() {
             $totalqty += $qty;
         }
 
+        // Generate kode transaksi unik TRxxxx
+        do {
+            $random_kodetr = 'TR' . random_int(1000, 9999);
+            $cek = $conn->prepare("SELECT kodetr FROM masterpenjualan WHERE kodetr = ?");
+            $cek->bind_param("s", $random_kodetr);
+            $cek->execute();
+            $cek->store_result();
+        } while ($cek->num_rows > 0);
+        
         // Insert ke master
-        $stmt = $conn->prepare("INSERT INTO masterpenjualan (konsumen, total_penjualan, totalqty) VALUES (?, ?, ?)");
-        $stmt->bind_param("sii", $konsumen, $total_penjualan, $totalqty);
+        $stmt = $conn->prepare("INSERT INTO masterpenjualan (kodetr, konsumen, total_penjualan, totalqty) VALUES (?, ?, ?, ?)");
+        $kodetr = $random_kodetr;
+        $stmt->bind_param("ssdi", $kodetr, $konsumen, $total_penjualan, $totalqty);
         $stmt->execute();
-        $kodetr = $conn->insert_id;
 
         // Insert ke detail dan update stok item
         $stmtDetail = $conn->prepare("INSERT INTO detailpenjualan (kodetr, kode_item, jumlah, subtotal) VALUES (?, ?, ?, ?)");
@@ -327,10 +336,9 @@ function insertPenjualan() {
 
         foreach ($items as $item) {
             $kode_item = $item['kode_item'];
-            $harga = floatval($item['harga']); // Ini harga jual
             $qty = intval($item['qty']);
-            $subtotal = $harga * $qty;
-
+            $harga = floatval($item['harga']);
+            $subtotal = $qty * $harga;
             // Cek stok sebelum update
             $check_stok_stmt = $conn->prepare("SELECT jumlah_item FROM item WHERE kode_item = ?");
             $check_stok_stmt->bind_param("s", $kode_item);
@@ -343,7 +351,7 @@ function insertPenjualan() {
             }
 
             // Insert detail penjualan
-            $stmtDetail->bind_param("isid", $kodetr, $kode_item, $qty, $subtotal);
+            $stmtDetail->bind_param("ssid", $kodetr, $kode_item, $qty, $subtotal);
             $stmtDetail->execute();
 
             // Update stok item
@@ -391,19 +399,18 @@ function getPenjualan() {
 function getItemOptions() {
     global $conn;
     // PERBAIKAN: Ambil juga kolom 'satuan'
-    $result = $conn->query("SELECT kode_item, nama, jumlah_item, harga, satuan FROM item ORDER BY nama ASC");
+    $result = $conn->query("SELECT kode_item, nama, jumlah_item, harga, harga_beli, satuan FROM item ORDER BY nama ASC");
     $options = "";
     $full_data = []; // Untuk menyimpan data lengkap setiap item
     while ($row = $result->fetch_assoc()) {
-        // PERBAIKAN: Ganti value dengan kode_item, label dengan format yang diinginkan
-        $options .= "<option value='{$row['kode_item']}' label='{$row['nama']} (Stok: {$row['jumlah_item']}, Harga: Rp. {$row['harga']})'></option>";
-        
+        $options .= "<option value='{$row['kode_item']}'>{$row['nama']} (Stok: {$row['jumlah_item']}, Harga: Rp. {$row['harga']}) - {$row['kode_item']}</option>";
         // Simpan data lengkap untuk penggunaan filter sisi klien (jika Select2 tidak digunakan dengan AJAX)
         $full_data[] = [
             'kode_item' => $row['kode_item'],
             'nama' => $row['nama'],
             'jumlah_item' => $row['jumlah_item'],
             'harga' => $row['harga'],
+            'harga_beli' => $row['harga_beli'],
             'satuan' => $row['satuan'] // Pastikan satuan juga diambil
         ];
     }
@@ -501,6 +508,8 @@ function insertPembelian() {
     $tanggal_pembelian = $_POST['tanggal_pembelian'] ?? date('Y-m-d'); // Tanggal pembelian
     $kode_supplier = $_POST['kode_supplier'] ?? '';
     $items_pembelian = $_POST['items_pembelian'] ?? []; // Ini adalah array item yang dibeli
+    $status_pembelian = $_POST['status_pembelian'] ?? 'pending';
+
 
     // Validasi input utama
     if (empty($kode_supplier) || !is_array($items_pembelian) || count($items_pembelian) === 0) {
@@ -522,8 +531,9 @@ function insertPembelian() {
 
         // Insert ke tabel master `pembelian`
         // Perhatikan: status_pembelian default 'pending'
-        $stmt_master = $conn->prepare("INSERT INTO pembelian (kode_supplier, tanggal_pembelian, total_biaya, status_pembelian) VALUES (?, ?, ?, 'pending')");
-        $stmt_master->bind_param("ssd", $kode_supplier, $tanggal_pembelian, $total_biaya);
+        $stmt_master = $conn->prepare("INSERT INTO pembelian (kode_supplier, tanggal_pembelian, total_biaya, status_pembelian) VALUES (?, ?, ?, ?)");
+        $stmt_master->bind_param("ssds", $kode_supplier, $tanggal_pembelian, $total_biaya, $status_pembelian);
+
         $stmt_master->execute();
         $id_pembelian = $conn->insert_id; // Ambil ID pembelian yang baru saja dibuat
 
@@ -802,30 +812,41 @@ function updateSupplier() {
     }
 }
 
-function deleteSupplier() {
-    global $conn;
+function deleteSupplier($conn, $kode_supplier) {
+    // Inisialisasi jumlah agar tidak undefined!
+    $jumlah = 0;
 
-    if ($_SERVER["REQUEST_METHOD"] !== "POST") {
-        echo json_encode(["status" => "error", "message" => "⚠️ Harus menggunakan metode POST."]);
-        return;
+    // Cek apakah supplier masih dipakai di pembelian
+    $cek = $conn->prepare("SELECT COUNT(*) FROM pembelian WHERE kode_supplier=?");
+    $cek->bind_param("s", $kode_supplier);
+    $cek->execute();
+    $cek->bind_result($jumlah);
+
+    // cek->fetch() return true/false, isi $jumlah hanya jika fetch() true
+    if ($cek->fetch() && $jumlah > 0) {
+        $cek->close();
+        return [
+            'status' => 'error',
+            'message' => 'Supplier tidak dapat dihapus karena masih digunakan pada transaksi pembelian.'
+        ];
     }
+    $cek->close();
 
-    if (empty($_POST['kode_supplier'])) {
-        echo json_encode(["status" => "error", "message" => "⚠️ Kode Supplier tidak boleh kosong."]);
-        return;
-    }
-
-    $kode_supplier = $_POST['kode_supplier'];
-
-    $stmt = $conn->prepare("DELETE FROM supplier WHERE kode_supplier = ?");
+    // Kalau tidak ada relasi, baru hapus
+    $stmt = $conn->prepare("DELETE FROM supplier WHERE kode_supplier=?");
     $stmt->bind_param("s", $kode_supplier);
+    $success = $stmt->execute();
+    $stmt->close();
 
-    if ($stmt->execute()) {
-        echo json_encode(["status" => "success", "message" => "🗑️ Supplier berhasil dihapus."]);
+    if ($success) {
+        return ['status' => 'success', 'message' => 'Supplier berhasil dihapus.'];
     } else {
-        echo json_encode(["status" => "error", "message" => "❌ Gagal menghapus supplier: " . $stmt->error]);
+        return ['status' => 'error', 'message' => 'Gagal menghapus supplier.'];
     }
 }
+
+
+
 
 
 // Tambahkan fungsi deleteMultiplePembelian
@@ -935,8 +956,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         } elseif ($_POST['action'] === "updateSupplier") {
             updateSupplier(); exit;
         } elseif ($_POST['action'] === "deleteSupplier") {
-            deleteSupplier(); exit;
-        }
+    $kode_supplier = $_POST['kode_supplier'] ?? null; // <-- Tambahkan baris ini!
+    $result = deleteSupplier($conn, $kode_supplier);
+    echo json_encode($result); // <-- Jangan lupa ini biar hasil bisa dibaca JS-mu
+    exit;
+}
+
     }
     // Fallback if no action is specified in POST, assuming it's insertItem
     // This part might need refinement depending on overall API design philosophy

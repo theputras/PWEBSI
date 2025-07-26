@@ -35,7 +35,7 @@ include "controller.php";
         </div>
         <div class="col-md-2">
           <label for="harga_jual_input" class="form-label">Harga Jual</label>
-          <input type="number" name="harga" id="harga_jual_input" class="form-control" placeholder="Harga Jual" required>
+          <input type="number" name="harga_jual" id="harga_jual_input" class="form-control" placeholder="Harga Jual" required>
           </div>
         <div class="col-md-auto">
           <button type="submit" class="btn btn-primary">Simpan</button>
@@ -313,6 +313,7 @@ $(document).ready(function () {
             showToast(res.message, res.status === "success" ? "success" : "danger");
 
             if (res.status === "success") {
+              localStorage.removeItem(cacheKey);
                 reloadItems();
                 resetForm(); // Panggil resetForm untuk mengosongkan dan menutup form
             }
