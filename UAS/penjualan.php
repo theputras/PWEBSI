@@ -91,23 +91,64 @@
   </tr>
       </thead>
       <tbody></tbody>
-   
+
     </table>
 
 
-<!-- Toast Container -->
+<div class="modal fade" id="detailTransaksiModal" tabindex="-1" aria-labelledby="detailTransaksiModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="detailTransaksiModalLabel">Detail Transaksi Penjualan</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p><strong>Kode Transaksi:</strong> <span id="modalKodeTr"></span></p>
+        <p><strong>Tanggal:</strong> <span id="modalTanggal"></span></p>
+        <p><strong>Konsumen:</strong> <span id="modalKonsumen"></span></p>
+
+        <h6>Detail Item:</h6>
+        <table class="table table-bordered table-striped">
+          <thead class="table-dark">
+            <tr>
+              <th>Kode Item</th>
+              <th>Nama Item</th>
+              <th>Satuan</th>
+              <th>Harga</th>
+              <th>Qty</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody id="modalDetailItemTableBody">
+            </tbody>
+          <tfoot>
+            <tr>
+              <th colspan="4" class="text-end">TOTAL QTY</th>
+              <th id="modalTotalQty">0</th>
+              <th id="modalTotalHarga">Rp 0</th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999">
   <div id="liveToast" class="toast align-items-center text-white bg-danger border-0" role="showToast">
     <div class="d-flex">
       <div class="toast-body" id="toastBody">
-        <!-- isi notif -->
-      </div>
+        </div>
       <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
     </div>
   </div>
 </div>
 <script>
-// let daftarItem = [];
+let daftarItem = []; // Pastikan daftarItem dideklarasikan di sini atau di luar fungsi $(document).ready
 function showToast(message, type = 'danger') {
   const toastEl = document.getElementById('liveToast');
   const toastBody = document.getElementById('toastBody');
@@ -142,7 +183,9 @@ function loadPenjualan() {
       <td>${row.totalqty}</td>
       <td>Rp ${parseFloat(row.total_penjualan).toLocaleString("id-ID")}</td>
       <td>
-        <button class="btn btn-info btn-sm btnDetail" data-kodetr="${row.kodetr}" title="Lihat Detail">
+        <button class="btn btn-info btn-sm btnDetail" data-kodetr="${row.kodetr}" title="Lihat Detail"
+          data-tanggal="${row.tanggal}" data-konsumen="${row.konsumen}"
+          data-totalqty="${row.totalqty}" data-totalpenjualan="${row.total_penjualan}">
           🔍
         </button>
       </td>
@@ -242,7 +285,7 @@ $("#kode_item").on("change", function () {
 
 $("#qty_item").on("input", function () {
   const qty = parseInt(this.value) || 0;
-  const harga = parseFloat($("#harga_item").val()) || 0;
+  const harga = parseFloat($("#harga_item").data("raw")) || 0; // Ambil dari data("raw")
   const subtotal = harga * qty;
 
   $("#subtotal_item").val(subtotal.toLocaleString("id-ID"));
@@ -259,7 +302,11 @@ $("#btnTambahItem").on("click", function () {
   const qty = parseInt($("#qty_item").val());
   const subtotal = harga * qty;
 
-  if (!kode || qty < 1) return showToast("Pilih item dan qty valid!");
+  if (!kode || qty < 1 || isNaN(harga)) { // Tambahkan validasi harga
+    showToast("Pilih item, masukkan qty valid, dan pastikan harga ada!");
+    return;
+  }
+
 
   daftarItem.push({ kode, nama, satuan, harga, qty, subtotal });
   updateTabel();
@@ -297,7 +344,7 @@ $("#formTransaksi").on("submit", function (e) {
     const res = typeof resRaw === "string" ? JSON.parse(resRaw) : resRaw;
 
     if (res.status === "success") {
-      showToast(res.message);
+      showToast(res.message, 'success'); // Tambahkan type success
       daftarItem = [];
       updateTabel();
       $("#formTransaksi")[0].reset();
@@ -309,27 +356,55 @@ $("#formTransaksi").on("submit", function (e) {
 });
 
 
+// Event listener untuk tombol "🔍 Detail"
 $(document).on("click", ".btnDetail", function () {
   const kodetr = $(this).data("kodetr");
+  const tanggal = $(this).data("tanggal");
+  const konsumen = $(this).data("konsumen");
+  const totalqty = $(this).data("totalqty");
+  const totalpenjualan = $(this).data("totalpenjualan");
+
+
+  // Isi data master ke modal
+  $('#modalKodeTr').text(kodetr);
+  $('#modalTanggal').text(tanggal);
+  $('#modalKonsumen').text(konsumen);
+
 
   $.get(`./controller.php?action=detailPenjualan&kodetr=${kodetr}`, function (resRaw) {
     const res = typeof resRaw === "string" ? JSON.parse(resRaw) : resRaw;
 
     if (res.status === "success") {
-      let pesan = `Detail Transaksi #${kodetr}\n\n`;
-
-      res.data.forEach((item, i) => {
-        pesan += `${i + 1}. ${item.nama} (${item.kode_item})\n`;
-        pesan += `   Qty: ${item.qty} ${item.satuan}, Harga: Rp ${parseFloat(item.harga).toLocaleString("id-ID")}, Subtotal: Rp ${parseFloat(item.subtotal).toLocaleString("id-ID")}\n\n`;
+      let detailHtml = '';
+      let modalTotalQty = 0;
+      let modalTotalHarga = 0;
+      res.data.forEach((item) => {
+        modalTotalQty += item.qty;
+        modalTotalHarga += parseFloat(item.subtotal);
+        detailHtml += `
+          <tr>
+            <td>${item.kode_item}</td>
+            <td>${item.nama}</td>
+            <td>${item.satuan}</td>
+            <td>Rp ${parseFloat(item.harga).toLocaleString("id-ID")}</td>
+            <td>${item.qty}</td>
+            <td>Rp ${parseFloat(item.subtotal).toLocaleString("id-ID")}</td>
+          </tr>
+        `;
       });
+      $('#modalDetailItemTableBody').html(detailHtml);
+      $('#modalTotalQty').text(modalTotalQty);
+      $('#modalTotalHarga').text(`Rp ${modalTotalHarga.toLocaleString("id-ID")}`);
 
-      showToast(pesan);
+      // Tampilkan modal
+      const detailModal = new bootstrap.Modal(document.getElementById('detailTransaksiModal'));
+      detailModal.show();
+
     } else {
       showToast(res.message);
     }
   });
 });
-
 
 
 });

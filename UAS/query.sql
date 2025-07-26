@@ -19,8 +19,11 @@ CREATE TABLE `item` (
   `satuan` varchar(20) DEFAULT NULL,
   `harga` decimal(15,2) DEFAULT '0.00',
   `jumlah_item` int unsigned DEFAULT '0',
+  `harga_beli` DECIMAL(15,2) DEFAULT '0.00',
   PRIMARY KEY (`kode_item`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
 
 -- tugas.masterpenjualan definition
 

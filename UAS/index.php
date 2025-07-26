@@ -5,11 +5,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Bootstrap Icons CDN -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-  
+
   <style>
   .nav-link.active {
     background-color: white !important;
@@ -28,6 +27,7 @@ include 'koneksi.php';
 $alert_class = $db_connected ? 'alert-success' : 'alert-danger';
 $icon = $db_connected ? '✅' : '❌';
 ?>
+
 <nav class="navbar navbar-expand-sm navbar-dark bg-danger">
   <div class="container-fluid">
     <a class="navbar-brand text-white fw-bold" href="#">UAS PHP</a>
@@ -37,7 +37,7 @@ $icon = $db_connected ? '✅' : '❌';
       </li>
       <li class="nav-item">
         <a class="nav-link text-white" href="#" data-page="./supplier.php">Supplier</a>
-      </li>   
+      </li>
       <li class="nav-item">
         <a class="nav-link text-white" href="#" data-page="./pembelian.php">Pembelian</a>
       </li>
@@ -48,21 +48,19 @@ $icon = $db_connected ? '✅' : '❌';
   </div>
 </nav>
 
-<div class="container mt-4">
-
+<div class="container mt-3">
   <div class="alert <?= $alert_class ?> text-center" role="alert">
-    <?= $icon ?> Status Koneksi Database: <?= $db_message ?>
+    <?= $icon ?> **Status Koneksi Database:** <?= $db_message ?>
   </div>
-  
+
   <div id="isi" class="p-4 border rounded bg-light shadow-sm">
     </div>
 </div>
 
-
-
-
 <script>
-window.daftarItem = [];
+// Deklarasi daftarItem di sini agar hanya sekali
+let daftarItem = []; 
+
 $(document).ready(function() {
   // Load halaman default (Penjualan)
   $("#isi").load("./penjualan.php");
