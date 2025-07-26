@@ -20,7 +20,14 @@
 </style>
 </head>
 <body>
+<?php
+// Sertakan file koneksi.php untuk mendapatkan status koneksi
+include 'koneksi.php';
 
+// Tentukan kelas alert berdasarkan status koneksi
+$alert_class = $db_connected ? 'alert-success' : 'alert-danger';
+$icon = $db_connected ? '✅' : '❌';
+?>
 <nav class="navbar navbar-expand-sm navbar-dark bg-danger">
   <div class="container-fluid">
     <a class="navbar-brand text-white fw-bold" href="#">UAS PHP</a>
@@ -42,10 +49,17 @@
 </nav>
 
 <div class="container mt-4">
-  <div id="isi" class="p-4 border rounded bg-light shadow-sm">
-    <!-- Konten akan dimuat di sini -->
+
+  <div class="alert <?= $alert_class ?> text-center" role="alert">
+    <?= $icon ?> Status Koneksi Database: <?= $db_message ?>
   </div>
+  
+  <div id="isi" class="p-4 border rounded bg-light shadow-sm">
+    </div>
 </div>
+
+
+
 
 <script>
 window.daftarItem = [];
