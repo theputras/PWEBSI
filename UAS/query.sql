@@ -1,7 +1,7 @@
 -- tugas.detailpenjualan definition
 
 CREATE TABLE `detailpenjualan` (
-  `id` int NOT NULL AUTO_INCREMENT,
+  `id` int NOT NULL,
   `kodetr` int DEFAULT NULL,
   `kode_item` varchar(50) DEFAULT NULL,
   `jumlah` int DEFAULT NULL,
@@ -28,7 +28,7 @@ CREATE TABLE `item` (
 -- tugas.masterpenjualan definition
 
 CREATE TABLE `masterpenjualan` (
-  `kodetr` int NOT NULL AUTO_INCREMENT,
+  `kodetr` varchar(20) NOT NULL,
   `tanggal` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `konsumen` varchar(100) DEFAULT NULL,
   `total_penjualan` bigint DEFAULT NULL,

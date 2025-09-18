@@ -1,39 +1,58 @@
 <?php
-// Ambil variabel dari .env
-$host = '41.216.191.160';
-$port = '3306';
-$dbname = 'tugas';
-$user = 'mobile1';
-$pass = 'mobile121';
 
-// Inisialisasi variabel status
+// Daftar koneksi DB (tanpa .env)
+$connections = [
+    [
+        'label' => 'Primary',
+        'host'  => '41.216.191.160',
+        'port'  => 3306,
+        'user'  => 'mobile1',
+        'pass'  => 'mobile121',
+        'db'    => 'tugas'
+    ],
+    [
+        'label' => 'Backup',
+        'host'  => '192.168.1.100',
+        'port'  => 3306,
+        'user'  => 'backupuser',
+        'pass'  => 'backuppass',
+        'db'    => 'tugas'
+    ]
+];
+
+$conn = null;
+$activeLabel = null;
 $db_connected = false;
 $db_message = "";
 
-// Buat koneksi MySQLi
-$conn = new mysqli($host, $user, $pass, $dbname, $port);
-
-// Cek koneksi
-if ($conn->connect_error) {
-    $db_connected = false;
-    $db_message = "Koneksi gagal: " . $conn->connect_error;
-    // Jangan die() di sini, agar halaman utama tetap bisa dimuat
-} else {
-    $db_connected = true;
-    $db_message = "Koneksi berhasil ke database '$dbname'";
-}
-
-function getConnection() {
-    global $host, $port, $dbname, $user, $pass;
-
-    // Buat koneksi MySQLi
-    $conn = new mysqli($host, $user, $pass, $dbname, $port);
-
-    // Cek koneksi
-    if ($conn->connect_error) {
-        return null; // Mengembalikan null jika koneksi gagal
+foreach ($connections as $config) {
+    try {
+        $testConn = @mysqli_connect(
+            $config['host'],
+            $config['user'],
+            $config['pass'],
+            $config['db'],
+            (int)$config['port']
+        );
+        if ($testConn && $testConn instanceof mysqli && !$testConn->connect_errno) {
+            $conn = $testConn;
+            $activeLabel = "{$config['label']} ({$config['user']}@{$config['host']}:{$config['port']})";
+            $db_connected = true;
+            $db_message = "Koneksi berhasil ke database '{$config['db']}' pakai $activeLabel";
+            break;
+        }
+    } catch (mysqli_sql_exception $e) {
+        error_log("Gagal konek ke {$config['label']} DB: " . $e->getMessage());
     }
-
-    return $conn;
 }
+
+if (!$conn) {
+    $db_connected = false;
+    $db_message = "Gagal konek ke semua database (primary & backup).";
+    // Jangan die() biar halaman tetap bisa jalan, tinggal cek $db_connected sebelum query
+}
+
+// Bisa cek status di mana aja setelah include
+// echo $db_message;
+
 ?>
