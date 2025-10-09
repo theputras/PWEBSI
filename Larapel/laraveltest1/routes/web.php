@@ -45,6 +45,18 @@ Route::get('hitungdiskonView', function () {
     return view('hitungDiskon');
 });
 
+// Rute untuk menampilkan form input Blade
+Route::get('/tugas/blade/input', [TugasController::class, 'showBladeForm'])->name('blade.input');
+
+// Rute untuk memproses data dari form dan menampilkan output
+Route::post('/tugas/blade/output', [TugasController::class, 'processBladeForm'])->name('blade.output');
+
+// Rute untuk menampilkan form input jQuery
+Route::get('/tugas/jquery/input', [TugasController::class, 'showJqueryForm'])->name('jquery.input');
+
+// Rute untuk menampilkan output dari data yang dikirim via URL
+Route::get('/tugas/jquery/output', [TugasController::class, 'processJqueryForm'])->name('jquery.output');
+
 Route::get('hitungnilaiakhir', function () {
     return view('hitungNilaiAkhir');
 });

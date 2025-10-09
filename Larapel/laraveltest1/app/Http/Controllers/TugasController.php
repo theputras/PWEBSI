@@ -61,4 +61,42 @@ class TugasController extends Controller
         ];
         return view('supplier', compact('supplier'));
     }
+    
+    public function showBladeForm()
+    {
+        return view('input_blade');
+    }
+
+    /**
+     * Menerima data dari form, lalu menampilkannya di halaman output.
+     */
+    public function processBladeForm(Request $request)
+    {
+        // Validasi sederhana (opsional, tapi praktik yang baik)
+        $validatedData = $request->validate([
+            'tgl' => 'required|date',
+            'nama' => 'required|string|max:255',
+            'alamat' => 'required|string',
+            'telp' => 'required|numeric',
+        ]);
+
+        // Kirim data yang sudah divalidasi ke view output
+        return view('output_blade', ['data' => $validatedData]);
+    }
+
+public function showJqueryForm()
+    {
+        return view('input_jquery');
+    }
+
+    /**
+     * Menerima data dari URL (Query String), lalu menampilkannya.
+     */
+    public function processJqueryForm(Request $request)
+    {
+        // Data diambil langsung dari request GET (URL)
+        $data = $request->all();
+
+        return view('output_jquery', ['data' => $data]);
+    }
 }
