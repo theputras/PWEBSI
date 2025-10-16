@@ -120,13 +120,13 @@ public function hitungNilaiAkhir(Request $request) {
     // week 5
     public function PenampilanControl()
     {
-        // $xx = new Model1();
-        // $xx->PenampilanModel();
-        // echo '<br>';
-        // $xx->ProsedureModel(20, 30);
-        // echo '<br>';
-        // echo $xx->FungsinyaModel(20, 30);
-        // echo '<br>';
+        $xx = new Model1();
+        $xx->PenampilanModel();
+        echo '<br>';
+        $xx->ProsedureModel(20, 30);
+        echo '<br>';
+        echo $xx->FungsinyaModel(20, 30);
+        echo '<br>';
         $yy = new Model2();
         $yy->PenampilanModel();
         echo '<br>';

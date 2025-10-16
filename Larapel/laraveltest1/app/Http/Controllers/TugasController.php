@@ -99,4 +99,22 @@ public function showJqueryForm()
 
         return view('output_jquery', ['data' => $data]);
     }
+    
+    public function indexSegitiga()
+    {
+        return view('segitiga.input');
+    }
+
+    public function hitung(Request $request)
+    {
+        $request->validate([
+            'sisi1' => 'required|numeric|min:1',
+            'sisi2' => 'required|numeric|min:1',
+            'sisi3' => 'required|numeric|min:1',
+        ]);
+
+        $keliling = $request->sisi1 + $request->sisi2 + $request->sisi3;
+
+        return view('segitiga.hasil', compact('keliling'));
+    }
 }

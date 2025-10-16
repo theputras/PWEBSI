@@ -71,7 +71,7 @@ Route::post('hitungnilaiakhir', [Controller::class, 'hitungNilaiAkhir']);
 
 
 // Week 5
-Route::get('/penampilan', [Controller::class, 'PenampilanControl']);
+Route::get('/tampil', [Controller::class, 'PenampilanControl']);
 
 Route::get('barang', [BarangController::class, 'readbarang']);
 Route::get('barang/tambah', [BarangController::class, 'tambahbarang']);
@@ -80,3 +80,8 @@ Route::get('barang/hapus/{kodebr}', [BarangController::class, 'hapusbarang']);
 Route::get('barang/edit/{kodebr}', [BarangController::class, 'editbarang']);
 Route::post('barang/editt', [BarangController::class, 'edittbarang']);
 Route::get('barang/cari/{cari}', [BarangController::class, 'caribarang']);
+
+
+// Praktikum 4 (TUGAS)
+Route::get('/segitiga', [TugasController::class, 'indexSegitiga'])->name('segitiga.index');
+Route::post('/segitiga/hitung', [TugasController::class, 'hitung'])->name('segitiga.hitung');
