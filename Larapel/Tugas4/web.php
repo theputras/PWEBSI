@@ -4,8 +4,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\TugasController;
 use App\Http\Controllers\ControllerData;
-use App\Http\Controllers\AnggotaController;  // akses controller lain
-use App\Http\Controllers\BarangController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -68,15 +66,3 @@ Route::post('konversimeter', [Controller::class, 'konversiMeterKeSentimeter']);
 Route::post('hitungdiskon', [Controller::class, 'hitungDiskon']);
 Route::post('hitungnilaiakhir', [Controller::class, 'hitungNilaiAkhir']);
 
-
-
-// Week 5
-Route::get('/penampilan', [Controller::class, 'PenampilanControl']);
-
-Route::get('barang', [BarangController::class, 'readbarang']);
-Route::get('barang/tambah', [BarangController::class, 'tambahbarang']);
-Route::post('barang/simpan', [BarangController::class, 'simpanbarang']);
-Route::get('barang/hapus/{kodebr}', [BarangController::class, 'hapusbarang']);
-Route::get('barang/edit/{kodebr}', [BarangController::class, 'editbarang']);
-Route::post('barang/editt', [BarangController::class, 'edittbarang']);
-Route::get('barang/cari/{cari}', [BarangController::class, 'caribarang']);

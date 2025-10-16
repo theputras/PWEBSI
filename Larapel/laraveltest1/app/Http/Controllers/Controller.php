@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Http\Request;
+use App\models\Model1;  // week5
+use App\Models\Model2;  // week5
 
 class Controller extends BaseController
 {
@@ -114,6 +116,24 @@ public function hitungNilaiAkhir(Request $request) {
     $nilaiAkhir = ($uts * 0.3) + ($uas * 0.4) + ($tugas * 0.3);
     return view('hasilNilaiAkhir', ['nilaiAkhir' => $nilaiAkhir, 'uts' => $uts, 'uas' => $uas, 'tugas' => $tugas]);
 }
+
+    // week 5
+    public function PenampilanControl()
+    {
+        // $xx = new Model1();
+        // $xx->PenampilanModel();
+        // echo '<br>';
+        // $xx->ProsedureModel(20, 30);
+        // echo '<br>';
+        // echo $xx->FungsinyaModel(20, 30);
+        // echo '<br>';
+        $yy = new Model2();
+        $yy->PenampilanModel();
+        echo '<br>';
+        $yy->ProsedureModel(20, 30);
+        echo '<br>';
+        echo $yy->FungsinyaModel(20, 30);
+    }
 
 
 }
