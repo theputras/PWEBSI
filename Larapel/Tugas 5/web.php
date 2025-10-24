@@ -4,10 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\TugasController;
 use App\Http\Controllers\ControllerData;
-// use App\Http\Controllers\AnggotaController;  // akses controller lain
+use App\Http\Controllers\AnggotaController;  // akses controller lain
 use App\Http\Controllers\BarangController;
-use App\Http\Controllers\OrderController;
-
 
 Route::get('/', function () {
     return view('welcome');
@@ -87,6 +85,3 @@ Route::get('barang/cari/{cari}', [BarangController::class, 'caribarang']);
 // Praktikum 4 (TUGAS)
 Route::get('/segitiga', [TugasController::class, 'indexSegitiga'])->name('segitiga.index');
 Route::post('/segitiga/hitung', [TugasController::class, 'hitung'])->name('segitiga.hitung');
-
-
-// Route::post('/order/total', [OrderController::class, 'total']);

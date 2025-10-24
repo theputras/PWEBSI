@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Order;
 
 class TugasController extends Controller
 {
@@ -116,5 +117,13 @@ public function showJqueryForm()
         $keliling = $request->sisi1 + $request->sisi2 + $request->sisi3;
 
         return view('segitiga.hasil', compact('keliling'));
+    }
+    
+        public function totalOrder(Request $request)
+    {
+        $items = $request->input('items', []);
+        $order = new Order();
+        $result = $order->calculateTotal($items);
+        return response()->json($result);
     }
 }
