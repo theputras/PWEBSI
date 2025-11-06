@@ -9,11 +9,14 @@ class Product extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'price', 'stock'];
+    // Tentukan kolom mana saja yang bisa diisi
+    protected $fillable = [
+        'kodeproduk', 'nama', 'satuan', 'harga', 'gambar'
+    ];
 
-    // Relasi: Produk bisa memiliki banyak transaksi
+    // Menambahkan relasi jika ada relasi yang diperlukan (contoh: jika produk punya banyak transaksi)
     public function transactions()
     {
-        return $this->hasMany(Transaction::class);
+        return $this->hasMany(Transaction::class, 'kodeproduk', 'kodeproduk');
     }
 }

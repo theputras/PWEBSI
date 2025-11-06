@@ -9,11 +9,14 @@ class Warehouse extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'location'];
+    // Tentukan kolom mana saja yang bisa diisi
+    protected $fillable = [
+        'kodegudang', 'namagudang', 'alamat', 'kontak', 'kapasitas'
+    ];
 
-    // Relasi: Gudang bisa memiliki banyak transaksi
+    // Relasi dengan transaksi (jika ada)
     public function transactions()
     {
-        return $this->hasMany(Transaction::class);
+        return $this->hasMany(Transaction::class, 'kodegudang', 'kodegudang');
     }
 }

@@ -1,111 +1,35 @@
-@import 'tailwindcss';
+/* 1. Import Bootstrap (Ini akan memberi kita tombol Biru dan Merah) */
+@import 'bootstrap/dist/css/bootstrap.min.css';
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
+/* 2. Style Kustom agar sesuai Screenshot PDF  */
 
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
-}
-
-
-/* Palet Warna */
-:root {
-    --primary-color: #662222; /* Burgundy */
-    --secondary-color: #842A3B; /* Ungu Terang */
-    --accent-color: #A3485A; /* Aksen Lembut */
-    --highlight-color: #F5DAA7; /* Cream Cerah */
-    --white: #ffffff; /* Putih */
-}
-
-/* Mengatur background untuk body */
+/* Mengganti background body menjadi light grey (seperti di PDF) */
 body {
-    background-color: var(--highlight-color);
-    color: var(--primary-color);
+    background-color: #f8f9fa; /* Bootstrap 'bg-light' grey */
+    color: #212529;
     font-family: 'Arial', sans-serif;
 }
 
-/* Header */
+/* 3. Navbar (Header) Hijau - Sesuai Screenshot  */
 .navbar {
-    background-color: var(--primary-color);
-    color: var(--white);
+    /* Gunakan !important untuk memaksa override style lain jika ada */
+    background-color: #198754 !important; /* Bootstrap 'bg-success' green */
 }
 
-.navbar a {
-    color: var(--white);
+/* 4. Table Header (Dark Grey) - Sesuai Screenshot  */
+.table thead th {
+    background-color: #343a40; /* Bootstrap 'bg-dark' grey */
+    color: #ffffff;
 }
 
-.navbar a:hover {
-    color: var(--highlight-color);
-}
-
-/* Tabel */
-.table {
-    background-color: var(--white);
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.table th {
-    background-color: var(--secondary-color);
-    color: var(--white);
-}
-
-.table td {
-    background-color: var(--white);
-}
-
-.table tbody tr:nth-child(even) {
-    background-color: var(--highlight-color);
-}
-
-/* Tombol */
-.btn-primary {
-    background-color: var(--primary-color);
-    color: var(--white);
-}
-
-.btn-primary:hover {
-    background-color: var(--secondary-color);
-}
-
-.btn-warning {
-    background-color: var(--accent-color);
-    color: var(--white);
-}
-
-.btn-warning:hover {
-    background-color: var(--secondary-color);
-}
-
-.btn-danger {
-    background-color: #ff4444;
-    color: var(--white);
-}
-
-.btn-danger:hover {
-    background-color: #ff0000;
-}
-
-/* Form */
-.form-control {
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    padding: 12px;
-}
-
-/* Card */
-.card {
-    background-color: var(--white);
-    border-radius: 10px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-}
-
+/* 5. Card Header (Biru) - Sesuai Screenshot  */
 .card-header {
-    background-color: var(--secondary-color);
-    color: var(--white);
-    font-weight: bold;
+     background-color: #0d6efd; /* Bootstrap 'bg-primary' blue */
+     color: #ffffff;
+     font-weight: bold;
+}
+
+/* Judul H1 (Contoh: "Product List") */
+h1 {
+    color: #343a40; /* Warna gelap agar kontras */
 }

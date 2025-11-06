@@ -6,16 +6,20 @@ use Illuminate\Support\Facades\Schema;
 
 class CreateProductsTable extends Migration
 {
-    public function up()
-    {
-        Schema::create('products', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->decimal('price', 8, 2);
-            $table->integer('stock');
-            $table->timestamps();
-        });
-    }
+// Create Produk Table
+public function up()
+{
+    Schema::create('products', function (Blueprint $table) {
+        $table->id();
+        $table->string('kodeproduk', 20)->unique();
+        $table->string('nama', 50);
+        $table->string('satuan', 15);
+        $table->double('harga');
+        $table->string('gambar', 255);
+        $table->timestamps();
+    });
+}
+
 
     public function down()
     {

@@ -6,16 +6,22 @@ use Illuminate\Support\Facades\Schema;
 
 class CreateVehiclesTable extends Migration
 {
-    public function up()
-    {
-        Schema::create('vehicles', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->integer('capacity');
-            $table->string('type'); // Pickup, Truck, etc.
-            $table->timestamps();
-        });
-    }
+// Create Kendaraan Table
+public function up()
+{
+    Schema::create('vehicles', function (Blueprint $table) {
+        $table->id();
+        $table->string('nopol', 20)->unique();
+        $table->string('nama_kendaraan', 100);
+        $table->string('jenis_kendaraan', 50);
+        $table->string('kontakdriver', 50);
+        $table->integer('tahun');
+        $table->double('kapasitas');
+        $table->string('foto', 255)->nullable();
+        $table->timestamps();
+    });
+}
+
 
     public function down()
     {

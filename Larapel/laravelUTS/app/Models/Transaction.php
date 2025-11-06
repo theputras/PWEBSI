@@ -9,23 +9,40 @@ class Transaction extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['product_id', 'warehouse_id', 'vehicle_id', 'quantity', 'delivery_date'];
+    /**
+     * INI WAJIB: Beri tahu Laravel nama tabel yang benar.
+     */
+    protected $table = 'masterkiriman';
 
-    // Relasi: Transaksi berhubungan dengan satu produk
-    public function product()
+    /**
+     * INI JUGA WAJIB: Definisikan Primary Key Anda
+     */
+protected $primaryKey = 'kodepengiriman';
+    public $incrementing = false;
+    protected $keyType = 'string';
+
+
+protected $fillable = [
+        'kodepengiriman', 
+        'tglpengiriman', 
+        'nopol', 
+        'driver', 
+        'totalqty'
+    ];
+
+public function products()
     {
-        return $this->belongsTo(Product::class);
+        // Pastikan foreign key pertama adalah 'kodepengiriman' (DENGAN 'n')
+        return $this->belongsToMany(Product::class, 'detailkirim', 'kodepengiriman', 'kodeproduk')
+                    ->withPivot('qty');
     }
 
-    // Relasi: Transaksi berhubungan dengan satu gudang
-    public function warehouse()
-    {
-        return $this->belongsTo(Warehouse::class);
-    }
-
-    // Relasi: Transaksi berhubungan dengan satu kendaraan
+    /**
+     * Relasi ke tabel vehicles
+     */
     public function vehicle()
     {
-        return $this->belongsTo(Vehicle::class);
+        // Asumsi primary key di 'vehicles' adalah 'nopol'
+        return $this->belongsTo(Vehicle::class, 'nopol', 'nopol');
     }
 }
