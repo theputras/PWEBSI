@@ -7,6 +7,7 @@ use App\Http\Controllers\ControllerData;
 // use App\Http\Controllers\AnggotaController;  // akses controller lain
 use App\Http\Controllers\BarangController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ControllerPertemuan9;
 
 
 Route::get('/', function () {
@@ -87,6 +88,8 @@ Route::get('barang/cari/{cari}', [BarangController::class, 'caribarang']);
 // Praktikum 4 (TUGAS)
 Route::get('/segitiga', [TugasController::class, 'indexSegitiga'])->name('segitiga.index');
 Route::post('/segitiga/hitung', [TugasController::class, 'hitung'])->name('segitiga.hitung');
-
+Route::get('/tugas90', [ControllerPertemuan9::class, 'tugas90']);
+Route::get('/tugasDiskon', [ControllerPertemuan9::class, 'tugasDiskon']);
+Route::get('/tugasSelect', [ControllerPertemuan9::class, 'tugasSelect']);
 
 // Route::post('/order/total', [OrderController::class, 'total']);

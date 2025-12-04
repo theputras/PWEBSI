@@ -21,7 +21,7 @@ protected $primaryKey = 'kodepengiriman';
     public $incrementing = false;
     protected $keyType = 'string';
 
-
+protected $guarded = [];
 protected $fillable = [
         'kodepengiriman', 
         'tglpengiriman', 
