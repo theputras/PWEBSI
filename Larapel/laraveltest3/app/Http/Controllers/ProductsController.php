@@ -30,6 +30,12 @@ class ProductsController extends Controller
      */
     public function store(Request $request)
     {
+        $request->validate([
+            'nama' => 'required',
+            'satuan' => 'required',
+            'harga' => 'required|numeric'
+        ]);
+
         Products::create($request->all());
         return redirect('index');
     }
@@ -56,7 +62,9 @@ class ProductsController extends Controller
      */
     public function update(Request $request, Products $products)
     {
-        //
+        $product = Products::find($products->id);
+        $product->update($request->all());
+        return redirect('index');
     }
 
     /**
@@ -64,7 +72,8 @@ class ProductsController extends Controller
      */
     public function destroy(Products $products)
     {
-        Products::destroy($products->id);
+        $product = Products::find($products->id);
+        $product->delete();
         return redirect('index');
     }
 }
